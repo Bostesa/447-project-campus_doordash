@@ -175,12 +175,14 @@ with st.form("worker_login_form", clear_on_submit=False):
     submit = st.form_submit_button("Login", use_container_width=True)
     
     if submit:
-        if email and password:
+        if email == "login" and password == "login":
             st.session_state.logged_in = True
             st.session_state.user_type = "worker"
             st.session_state.username = email
             st.success("Login successful!")
-            st.switch_page("app.py")
+            st.switch_page("pages/worker_dashboard.py")
+        elif email and password:
+            st.error("Invalid credentials. Use 'login' for both username and password.")
         else:
             st.error("Please enter both email and password")
 
