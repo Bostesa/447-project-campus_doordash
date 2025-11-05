@@ -1,0 +1,250 @@
+.worker-dashboard {
+  min-height: 100vh;
+  background-color: #f8f8f5;
+}
+
+.content-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 1.5rem;
+}
+
+/* Active Delivery Grid */
+.active-delivery-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.active-delivery-card {
+  background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  position: relative;
+  min-height: 180px;
+}
+
+.food-icon {
+  position: absolute;
+  right: 2rem;
+  top: 2rem;
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.order-from {
+  color: #007AFF;
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.order-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 0.5rem;
+}
+
+.order-details {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.order-pay {
+  color: #000000;
+  font-weight: 600;
+}
+
+/* Confirm Delivery Card */
+.confirm-delivery-card {
+  background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 180px;
+}
+
+.confirm-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #000000;
+}
+
+.confirm-description {
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.pin-input-group {
+  margin-top: auto;
+}
+
+.pin-input-group label {
+  display: block;
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.pin-input {
+  width: 100%;
+  text-align: center;
+  font-size: 1.25rem;
+  letter-spacing: 0.5rem;
+  padding: 1rem;
+  border: 2px solid #e5e7eb;
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+}
+
+.pin-input:focus {
+  outline: none;
+  border-color: #007AFF;
+}
+
+/* Button Row */
+.button-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.status-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.scan-button-wrapper button {
+  width: 100%;
+}
+
+.btn {
+  font-weight: 700;
+  border-radius: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  transition: all 0.2s;
+  min-height: 50px;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background-color: #007AFF;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #0066CC;
+}
+
+.btn-secondary {
+  background-color: white;
+  color: #000000;
+  border: 1px solid #e5e7eb;
+}
+
+.btn-secondary:hover {
+  background-color: #f3f4f6;
+}
+
+/* Job Cards */
+.job-card {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  display: grid;
+  grid-template-columns: 70px 1fr auto auto;
+  align-items: center;
+  gap: 1rem;
+}
+
+.job-icon {
+  width: 70px;
+  height: 70px;
+  border-radius: 0.5rem;
+  background: #fef3c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.job-details {
+  flex: 1;
+}
+
+.job-from {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.job-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #000000;
+  margin: 0.25rem 0;
+}
+
+.job-location {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.job-price {
+  color: #007AFF;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-right: 1rem;
+}
+
+.accept-btn {
+  background-color: #007AFF;
+  color: white;
+  font-weight: 700;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.accept-btn:hover {
+  background-color: #0066CC;
+}
+
+@media (max-width: 768px) {
+  .active-delivery-grid,
+  .button-row {
+    grid-template-columns: 1fr;
+  }
+
+  .job-card {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .job-icon {
+    margin: 0 auto;
+  }
+}

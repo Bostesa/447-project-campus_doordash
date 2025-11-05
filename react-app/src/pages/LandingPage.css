@@ -1,0 +1,539 @@
+.landing-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #000000 0%, #1a1a1a 50%, #000000 100%);
+  position: relative;
+  padding: 2rem;
+  overflow-x: hidden;
+}
+
+.landing-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255, 194, 14, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255, 194, 14, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* Hero Section */
+.hero-section {
+  text-align: center;
+  margin: 2rem auto 4rem auto;
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+}
+
+.hero-top-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.umbc-logo-container {
+  background: linear-gradient(135deg, #FFF9E6 0%, #FFFAF0 100%);
+  padding: 1.25rem 2.5rem;
+  border-radius: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 40px rgba(255, 194, 14, 0.4);
+  border: 3px solid rgba(255, 194, 14, 0.3);
+}
+
+.umbc-logo {
+  height: 90px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
+
+.hero-badge {
+  display: inline-block;
+  background: #FFC20E;
+  padding: 0.5rem 1.5rem;
+  border-radius: 2rem;
+  color: #000000;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  box-shadow: 0 4px 20px rgba(255, 194, 14, 0.4);
+}
+
+.hero-title {
+  font-size: 4.5rem;
+  font-weight: 900;
+  margin-bottom: 1.5rem;
+  line-height: 1.1;
+}
+
+.brand-name {
+  background: linear-gradient(135deg, #FFC20E 0%, #FFD700 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: inline-block;
+  text-shadow: 0 0 30px rgba(255, 194, 14, 0.3);
+}
+
+.hero-subtitle {
+  font-size: 1.125rem;
+  color: #e0e0e0;
+  max-width: 800px;
+  margin: 0 auto 3rem auto;
+  line-height: 1.8;
+}
+
+.hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 4rem;
+  flex-wrap: wrap;
+  margin-top: 2.5rem;
+}
+
+.hero-stat {
+  text-align: center;
+}
+
+.hero-stat-number {
+  font-size: 3rem;
+  font-weight: 900;
+  color: #FFC20E;
+  margin-bottom: 0.5rem;
+}
+
+.hero-stat-label {
+  color: #b0b0b0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Info Section */
+.info-section {
+  max-width: 1200px;
+  margin: 4rem auto;
+  position: relative;
+  z-index: 1;
+}
+
+.info-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #FFC20E;
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.info-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.info-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 194, 14, 0.3);
+  border-radius: 1rem;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.info-card:hover {
+  background: rgba(255, 194, 14, 0.1);
+  border-color: #FFC20E;
+  transform: translateY(-5px);
+}
+
+.info-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+}
+
+.info-card h3 {
+  color: #FFC20E;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.info-card p {
+  color: #d0d0d0;
+  line-height: 1.6;
+}
+
+.selection-prompt {
+  color: #FFC20E;
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 4rem 0 2rem 0;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  position: relative;
+  z-index: 1;
+}
+
+/* Role Cards Container */
+.role-cards-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.role-card {
+  position: relative;
+  background: white;
+  border-radius: 1.5rem;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.role-card:hover {
+  transform: translateY(-12px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.card-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  border-radius: 1.5rem 1.5rem 0 0;
+}
+
+.customer-decoration {
+  background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+.worker-decoration {
+  background: linear-gradient(90deg, #007AFF 0%, #0066CC 100%);
+}
+
+.role-card-icon-large {
+  font-size: 5rem;
+  margin: 1rem 0 1.5rem 0;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+}
+
+.role-card-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.role-card-subtitle {
+  color: #6b7280;
+  font-size: 1rem;
+  margin-bottom: 2rem;
+  font-weight: 500;
+}
+
+.role-features {
+  text-align: left;
+  margin-bottom: 2rem;
+  padding: 0 1rem;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+.feature-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.role-button {
+  width: 100%;
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.customer-button {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #000;
+}
+
+.customer-button:hover {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
+}
+
+.worker-button {
+  background: linear-gradient(135deg, #007AFF 0%, #0066CC 100%);
+  color: white;
+}
+
+.worker-button:hover {
+  background: linear-gradient(135deg, #0066CC 0%, #0052A3 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
+}
+
+.button-arrow {
+  transition: transform 0.3s;
+  font-size: 1.25rem;
+}
+
+.role-button:hover .button-arrow {
+  transform: translateX(4px);
+}
+
+/* Benefits Section */
+.benefits-section {
+  max-width: 1200px;
+  margin: 5rem auto;
+  position: relative;
+  z-index: 1;
+}
+
+.benefits-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #FFC20E;
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+}
+
+.benefit-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 194, 14, 0.2);
+  border-radius: 1rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.benefit-item:hover {
+  background: rgba(255, 194, 14, 0.08);
+  border-color: rgba(255, 194, 14, 0.5);
+  transform: translateY(-5px);
+}
+
+.benefit-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.benefit-item h3 {
+  color: #FFC20E;
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.benefit-item p {
+  color: #c0c0c0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Locations Section */
+.locations-section {
+  max-width: 1200px;
+  margin: 5rem auto;
+  position: relative;
+  z-index: 1;
+}
+
+.locations-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #FFC20E;
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.locations-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.location-tag {
+  background: rgba(255, 194, 14, 0.15);
+  border: 2px solid rgba(255, 194, 14, 0.4);
+  color: #FFC20E;
+  padding: 0.75rem 1.5rem;
+  border-radius: 2rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s;
+}
+
+.location-tag:hover {
+  background: rgba(255, 194, 14, 0.25);
+  border-color: #FFC20E;
+  transform: scale(1.05);
+}
+
+/* Footer Section */
+.landing-footer {
+  margin-top: 6rem;
+  padding: 3rem 0;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  border-top: 2px solid rgba(255, 194, 14, 0.2);
+}
+
+.footer-text {
+  color: #FFC20E;
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.footer-subtext {
+  color: #888;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .benefits-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .info-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 3rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+
+  .hero-stats {
+    gap: 2rem;
+  }
+
+  .hero-stat-number {
+    font-size: 2.25rem;
+  }
+
+  .info-title,
+  .benefits-title,
+  .locations-title {
+    font-size: 2rem;
+  }
+
+  .info-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .role-cards-container {
+    grid-template-columns: 1fr;
+    max-width: 500px;
+  }
+
+  .role-card-title {
+    font-size: 1.75rem;
+  }
+
+  .benefits-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-page {
+    padding: 1.5rem;
+  }
+
+  .umbc-logo {
+    height: 60px;
+  }
+
+  .hero-title {
+    font-size: 2.5rem;
+  }
+
+  .hero-badge {
+    font-size: 0.75rem;
+    padding: 0.4rem 1rem;
+  }
+
+  .hero-stats {
+    gap: 1.5rem;
+  }
+
+  .hero-stat-number {
+    font-size: 2rem;
+  }
+
+  .info-title,
+  .benefits-title,
+  .locations-title {
+    font-size: 1.75rem;
+  }
+
+  .role-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .role-features {
+    padding: 0 0.5rem;
+  }
+
+  .feature-item {
+    font-size: 0.875rem;
+  }
+
+  .location-tag {
+    padding: 0.6rem 1.25rem;
+    font-size: 0.875rem;
+  }
+}
