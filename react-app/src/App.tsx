@@ -1,12 +1,15 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useState } from 'react';
 import { UserType } from './types';
+import { CartProvider } from './contexts/CartContext';
+import { OrderProvider } from './contexts/OrderContext';
 
 // Pages
 import LandingPage from './pages/LandingPage';
 import CustomerLogin from './pages/CustomerLogin';
 import WorkerLogin from './pages/WorkerLogin';
 import RestaurantBrowse from './pages/RestaurantBrowse';
+import RestaurantMenu from './pages/RestaurantMenu';
 import WorkerDashboard from './pages/WorkerDashboard';
 import WorkerOrders from './pages/WorkerOrders';
 import CustomerOrders from './pages/CustomerOrders';
@@ -30,8 +33,10 @@ function App() {
   };
 
   return (
-    <BrowserRouter>
-      <Routes>
+    <OrderProvider>
+      <CartProvider>
+        <BrowserRouter>
+        <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/customer-login" element={<CustomerLogin onLogin={handleLogin} />} />
         <Route path="/worker-login" element={<WorkerLogin onLogin={handleLogin} />} />
@@ -42,6 +47,14 @@ function App() {
           element={
             isLoggedIn && userType === 'customer' ?
             <RestaurantBrowse username={username} onLogout={handleLogout} /> :
+            <Navigate to="/customer-login" />
+          }
+        />
+        <Route
+          path="/restaurant/:restaurantId"
+          element={
+            isLoggedIn && userType === 'customer' ?
+            <RestaurantMenu username={username} /> :
             <Navigate to="/customer-login" />
           }
         />
@@ -81,8 +94,10 @@ function App() {
             <Navigate to="/" />
           }
         />
-      </Routes>
-    </BrowserRouter>
+        </Routes>
+        </BrowserRouter>
+      </CartProvider>
+    </OrderProvider>
   );
 }
 
