@@ -117,6 +117,30 @@
   border-color: #007AFF;
 }
 
+.verify-pin-btn {
+  width: 100%;
+  background-color: #f2b90d;
+  color: #000000;
+  font-weight: 700;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.875rem;
+  font-size: 1rem;
+  margin-top: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.verify-pin-btn:hover:not(:disabled) {
+  background-color: #d9a50c;
+}
+
+.verify-pin-btn:disabled {
+  background-color: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
 /* Button Row */
 .button-row {
   display: grid;

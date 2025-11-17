@@ -26,18 +26,13 @@ export default function Account({ username, userType, onLogout }: Props) {
     return total + getCartCount(restaurantId);
   }, 0);
 
-  const handleViewCart = (restaurantId: string) => {
-    setSelectedCartId(restaurantId);
-    setShowCartSidebar(true);
-  };
-
   const handlePlaceOrder = (restaurantId: string) => {
     setSelectedCartId(restaurantId);
     setShowCartSidebar(false);
     setShowCheckout(true);
   };
 
-  const handleConfirmOrder = (paymentMethod: string, tip: number, deliveryInstructions: string) => {
+  const handleConfirmOrder = (paymentMethod: string, tip: number) => {
     if (!selectedCartId) return;
 
     const cart = carts[selectedCartId];
@@ -52,8 +47,6 @@ export default function Account({ username, userType, onLogout }: Props) {
     clearCart(selectedCartId);
     setSelectedCartId(null);
   };
-
-  const selectedCart = selectedCartId ? carts[selectedCartId] : null;
 
   return (
     <div className={`account-page ${isWorker ? 'worker' : 'customer'}`}>

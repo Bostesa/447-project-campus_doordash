@@ -1,13 +1,52 @@
 import { useState } from 'react';
 import Header from '../components/Header';
+import QRScanner from '../components/QRScanner';
+import { useOrders } from '../contexts/OrderContext';
 import './WorkerDashboard.css';
 
 interface Props {
   username: string;
 }
 
-export default function WorkerDashboard({ username }: Props) {
+export default function WorkerDashboard(_props: Props) {
   const [pin, setPin] = useState('');
+  const [showScanner, setShowScanner] = useState(false);
+  const { confirmDelivery, getOrderByCode } = useOrders();
+
+  const handleQRScan = (result: string) => {
+    console.log('QR Code scanned:', result);
+    const order = getOrderByCode(result);
+
+    if (order && confirmDelivery(result)) {
+      alert(`✓ Delivery Confirmed!\n\nRestaurant: ${order.restaurant}\nTotal: $${order.total.toFixed(2)}\n\nOrder has been marked as delivered.`);
+    } else {
+      alert('❌ Invalid Code\n\nThis QR code is not valid or the order has already been delivered.');
+    }
+
+    setShowScanner(false);
+    setPin('');
+  };
+
+  const handleOpenScanner = () => {
+    setShowScanner(true);
+  };
+
+  const handleVerifyPin = () => {
+    if (pin.length !== 4) {
+      alert('Please enter a 4-digit PIN');
+      return;
+    }
+
+    const order = getOrderByCode(pin);
+
+    if (order && confirmDelivery(pin)) {
+      alert(`✓ Delivery Confirmed!\n\nRestaurant: ${order.restaurant}\nTotal: $${order.total.toFixed(2)}\n\nOrder has been marked as delivered.`);
+      setPin('');
+    } else {
+      alert('❌ Invalid PIN\n\nThis PIN is not valid or the order has already been delivered.');
+      setPin('');
+    }
+  };
 
   const jobs = [
     {
@@ -66,7 +105,19 @@ export default function WorkerDashboard({ username }: Props) {
                 placeholder="– – – –"
                 maxLength={4}
                 className="pin-input"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && pin.length === 4) {
+                    handleVerifyPin();
+                  }
+                }}
               />
+              <button
+                className="verify-pin-btn"
+                onClick={handleVerifyPin}
+                disabled={pin.length !== 4}
+              >
+                Verify PIN
+              </button>
             </div>
           </div>
         </div>
@@ -78,7 +129,7 @@ export default function WorkerDashboard({ username }: Props) {
           </div>
 
           <div className="scan-button-wrapper">
-            <button className="btn btn-primary">🔲 Scan QR Code</button>
+            <button className="btn btn-primary" onClick={handleOpenScanner}>🔲 Scan QR Code</button>
           </div>
         </div>
 
@@ -97,6 +148,14 @@ export default function WorkerDashboard({ username }: Props) {
           </div>
         ))}
       </div>
+
+      {/* QR Scanner Modal */}
+      {showScanner && (
+        <QRScanner
+          onScan={handleQRScan}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
     </div>
   );
 }

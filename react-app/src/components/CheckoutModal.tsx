@@ -16,7 +16,7 @@ interface Props {
   items: CartItem[];
   subtotal: number;
   onClose: () => void;
-  onConfirmOrder: (paymentMethod: string, tip: number, deliveryInstructions: string) => void;
+  onConfirmOrder: (paymentMethod: string, tip: number) => void;
 }
 
 export default function CheckoutModal({ restaurantName, items, subtotal, onClose, onConfirmOrder }: Props) {
@@ -38,7 +38,7 @@ export default function CheckoutModal({ restaurantName, items, subtotal, onClose
   ];
 
   const handleConfirm = () => {
-    onConfirmOrder(paymentMethod, tipAmount, deliveryInstructions);
+    onConfirmOrder(paymentMethod, tipAmount);
   };
 
   return (

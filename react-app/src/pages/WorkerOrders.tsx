@@ -5,7 +5,7 @@ interface Props {
   username: string;
 }
 
-export default function WorkerOrders({ username }: Props) {
+export default function WorkerOrders(_props: Props) {
   const navigate = useNavigate();
 
   const orders = [

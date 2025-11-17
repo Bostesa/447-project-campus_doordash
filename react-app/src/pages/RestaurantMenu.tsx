@@ -11,7 +11,7 @@ interface Props {
   username: string;
 }
 
-export default function RestaurantMenu({ username }: Props) {
+export default function RestaurantMenu(_props: Props) {
   const navigate = useNavigate();
   const { restaurantId } = useParams<{ restaurantId: string }>();
   const { carts, addToCart: addToCartContext, removeFromCart: removeFromCartContext, updateQuantity: updateQuantityContext, clearCart, getCartTotal, getCartCount } = useCart();
@@ -51,7 +51,7 @@ export default function RestaurantMenu({ username }: Props) {
     setShowCheckout(true);
   };
 
-  const handleConfirmOrder = (paymentMethod: string, tip: number, deliveryInstructions: string) => {
+  const handleConfirmOrder = (paymentMethod: string, tip: number) => {
     if (!restaurantId) return;
 
     const totalWithTipAndFees = cartTotal + 2.99 + 1.50 + tip;

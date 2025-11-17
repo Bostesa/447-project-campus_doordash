@@ -167,6 +167,12 @@
   color: #f2b90d;
 }
 
+.order-card.highlighted {
+  border: 2px solid #f2b90d;
+  background-color: #fffbeb;
+  box-shadow: 0 4px 12px rgba(242, 185, 13, 0.15);
+}
+
 .order-title {
   font-size: 1.125rem;
   font-weight: 700;
@@ -208,6 +214,22 @@
 
 .reorder-btn:hover {
   background-color: #d9a50c;
+}
+
+.qr-code-btn {
+  background-color: #000000;
+  color: #f2b90d;
+  font-weight: 700;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.qr-code-btn:hover {
+  background-color: #221e10;
 }
 
 /* Floating Cart Button */

@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { UserType } from './types';
 import { CartProvider } from './contexts/CartContext';
 import { OrderProvider } from './contexts/OrderContext';
@@ -20,16 +20,44 @@ function App() {
   const [userType, setUserType] = useState<UserType>(null);
   const [username, setUsername] = useState('');
 
+  // Load login state from localStorage on mount
+  useEffect(() => {
+    const savedLoginState = localStorage.getItem('loginState');
+    if (savedLoginState) {
+      try {
+        const { isLoggedIn: savedIsLoggedIn, userType: savedUserType, username: savedUsername } = JSON.parse(savedLoginState);
+        if (savedIsLoggedIn && savedUserType && savedUsername) {
+          setIsLoggedIn(savedIsLoggedIn);
+          setUserType(savedUserType);
+          setUsername(savedUsername);
+        }
+      } catch (error) {
+        console.error('Error loading login state:', error);
+        localStorage.removeItem('loginState');
+      }
+    }
+  }, []);
+
   const handleLogin = (type: UserType, user: string) => {
     setIsLoggedIn(true);
     setUserType(type);
     setUsername(user);
+
+    // Save to localStorage
+    localStorage.setItem('loginState', JSON.stringify({
+      isLoggedIn: true,
+      userType: type,
+      username: user
+    }));
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
     setUserType(null);
     setUsername('');
+
+    // Clear localStorage
+    localStorage.removeItem('loginState');
   };
 
   return (

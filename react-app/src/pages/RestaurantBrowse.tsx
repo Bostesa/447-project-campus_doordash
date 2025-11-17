@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import CheckoutModal from '../components/CheckoutModal';
+import OrderQRCode from '../components/OrderQRCode';
 import { useCart } from '../contexts/CartContext';
 import { useOrders } from '../contexts/OrderContext';
 import './RestaurantBrowse.css';
@@ -11,13 +12,15 @@ interface Props {
   onLogout: () => void;
 }
 
-export default function RestaurantBrowse({ username, onLogout }: Props) {
+export default function RestaurantBrowse(_props: Props) {
   const navigate = useNavigate();
   const { carts, getCartTotal, getCartCount, removeFromCart, updateQuantity, clearCart } = useCart();
-  const { addOrder } = useOrders();
+  const { orders, addOrder } = useOrders();
   const [showCartSidebar, setShowCartSidebar] = useState(false);
   const [selectedCartId, setSelectedCartId] = useState<string | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
+  const [showQRCode, setShowQRCode] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<{ id: string; restaurant: string; total: number; verificationCode: string; pin: string } | null>(null);
 
   const handleViewCart = (e: React.MouseEvent, restaurantId: string) => {
     e.stopPropagation();
@@ -31,7 +34,7 @@ export default function RestaurantBrowse({ username, onLogout }: Props) {
     setShowCheckout(true);
   };
 
-  const handleConfirmOrder = (paymentMethod: string, tip: number, deliveryInstructions: string) => {
+  const handleConfirmOrder = (paymentMethod: string, tip: number) => {
     if (!selectedCartId) return;
 
     const selectedCart = carts[selectedCartId];
@@ -49,6 +52,20 @@ export default function RestaurantBrowse({ username, onLogout }: Props) {
   };
 
   const selectedCart = selectedCartId ? carts[selectedCartId] : null;
+
+  // Get current orders
+  const currentOrders = orders.filter(order => order.status === 'in_progress');
+
+  const handleShowQRCode = (order: typeof orders[0]) => {
+    setSelectedOrder({
+      id: order.id,
+      restaurant: order.restaurant,
+      total: order.total,
+      verificationCode: order.verificationCode,
+      pin: order.pin
+    });
+    setShowQRCode(true);
+  };
 
   const restaurants = [
     {
@@ -94,6 +111,40 @@ export default function RestaurantBrowse({ username, onLogout }: Props) {
       <Header userType="customer" activeTab="home" />
 
       <div className="content-wrapper">
+        {/* Current Orders Section */}
+        {currentOrders.length > 0 && (
+          <div className="current-orders-section">
+            <h2 className="section-header">Current Orders</h2>
+            {currentOrders.map((order) => {
+              const itemCount = order.items.reduce((sum, item) => sum + item.quantity, 0);
+              const firstItem = order.items[0];
+
+              return (
+                <div
+                  key={order.id}
+                  className="current-order-card"
+                >
+                  <div className="order-icon">{firstItem.icon}</div>
+                  <div className="order-info">
+                    <div className="order-status-badge">⏱ In Progress</div>
+                    <div className="order-restaurant-name">{order.restaurant}</div>
+                    <div className="order-item-count">
+                      {itemCount} item{itemCount !== 1 ? 's' : ''} • ${order.total.toFixed(2)}
+                    </div>
+                    <div className="order-time">{order.date}</div>
+                  </div>
+                  <button
+                    className="show-qr-btn"
+                    onClick={() => handleShowQRCode(order)}
+                  >
+                    Show QR Code
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Active Carts Section */}
         {Object.keys(carts).length > 0 && (
           <div className="active-carts-section">
@@ -228,6 +279,18 @@ export default function RestaurantBrowse({ username, onLogout }: Props) {
           subtotal={getCartTotal(selectedCartId)}
           onClose={() => setShowCheckout(false)}
           onConfirmOrder={handleConfirmOrder}
+        />
+      )}
+
+      {/* Order QR Code Modal */}
+      {showQRCode && selectedOrder && (
+        <OrderQRCode
+          orderId={selectedOrder.id}
+          restaurantName={selectedOrder.restaurant}
+          orderTotal={selectedOrder.total}
+          verificationCode={selectedOrder.verificationCode}
+          pin={selectedOrder.pin}
+          onClose={() => setShowQRCode(false)}
         />
       )}
     </div>

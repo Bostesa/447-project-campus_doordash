@@ -3,6 +3,92 @@
   background-color: #f0ece3;
 }
 
+/* Current Orders Section */
+.current-orders-section {
+  margin-bottom: 2rem;
+}
+
+.current-order-card {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 2px solid #f2b90d;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 12px rgba(242, 185, 13, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.2s;
+}
+
+.current-order-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(242, 185, 13, 0.3);
+}
+
+.current-order-card .order-icon {
+  font-size: 2.5rem;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.current-order-card .order-info {
+  flex: 1;
+}
+
+.order-status-badge {
+  display: inline-block;
+  background-color: #fbbf24;
+  color: #000;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.375rem;
+  margin-bottom: 0.5rem;
+}
+
+.current-order-card .order-restaurant-name {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 0.25rem;
+}
+
+.current-order-card .order-item-count {
+  font-size: 0.875rem;
+  color: #78716c;
+  margin-bottom: 0.25rem;
+}
+
+.current-order-card .order-time {
+  font-size: 0.75rem;
+  color: #a8a29e;
+}
+
+.show-qr-btn {
+  background-color: #000;
+  color: #f2b90d;
+  font-weight: 700;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.show-qr-btn:hover {
+  background-color: #221e10;
+  transform: scale(1.05);
+}
+
 /* Active Carts Section */
 .active-carts-section {
   margin-bottom: 2rem;
