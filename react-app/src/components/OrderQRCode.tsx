@@ -10,7 +10,14 @@ interface Props {
   onClose: () => void;
 }
 
-export default function OrderQRCode({ restaurantName, orderTotal, verificationCode, pin, onClose }: Props) {
+export default function OrderQRCode({ orderId, restaurantName, orderTotal, verificationCode, pin, onClose }: Props) {
+  // Create structured QR code data with order ID
+  const qrData = JSON.stringify({
+    orderId: orderId,
+    verificationCode: verificationCode,
+    type: 'campus-doordash-order'
+  });
+
   return (
     <>
       <div className="qr-overlay" onClick={onClose} />
@@ -24,11 +31,12 @@ export default function OrderQRCode({ restaurantName, orderTotal, verificationCo
           <div className="qr-info">
             <p className="qr-restaurant">{restaurantName}</p>
             <p className="qr-amount">Total: ${orderTotal.toFixed(2)}</p>
+            <p className="qr-order-id">Order ID: {orderId}</p>
           </div>
 
           <div className="qr-code-container">
             <QRCodeSVG
-              value={verificationCode}
+              value={qrData}
               size={250}
               level="H"
               includeMargin={true}

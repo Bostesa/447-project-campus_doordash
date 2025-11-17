@@ -15,10 +15,26 @@ export default function WorkerDashboard(_props: Props) {
 
   const handleQRScan = (result: string) => {
     console.log('QR Code scanned:', result);
-    const order = getOrderByCode(result);
 
-    if (order && confirmDelivery(result)) {
-      alert(`✓ Delivery Confirmed!\n\nRestaurant: ${order.restaurant}\nTotal: $${order.total.toFixed(2)}\n\nOrder has been marked as delivered.`);
+    // Parse QR code data - support both JSON and plain string formats
+    let verificationCode = result;
+    let orderId = '';
+
+    try {
+      const parsedData = JSON.parse(result);
+      if (parsedData.type === 'campus-doordash-order' && parsedData.verificationCode) {
+        verificationCode = parsedData.verificationCode;
+        orderId = parsedData.orderId;
+      }
+    } catch (e) {
+      // If not JSON, treat as plain verification code (backward compatibility)
+      verificationCode = result;
+    }
+
+    const order = getOrderByCode(verificationCode);
+
+    if (order && confirmDelivery(verificationCode)) {
+      alert(`✓ Delivery Confirmed!\n\nOrder ID: ${orderId || order.id}\nRestaurant: ${order.restaurant}\nTotal: $${order.total.toFixed(2)}\n\nOrder has been marked as delivered.`);
     } else {
       alert('❌ Invalid Code\n\nThis QR code is not valid or the order has already been delivered.');
     }

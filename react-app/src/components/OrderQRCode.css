@@ -96,6 +96,13 @@
 .qr-amount {
   font-size: 1.1rem;
   color: #6b7280;
+  margin: 0 0 0.5rem 0;
+}
+
+.qr-order-id {
+  font-size: 0.9rem;
+  color: #9ca3af;
+  font-family: 'Courier New', monospace;
   margin: 0;
 }
 

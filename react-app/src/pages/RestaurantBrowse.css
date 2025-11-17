@@ -512,16 +512,84 @@
   }
 }
 
+@media (max-width: 768px) {
+  .content-wrapper {
+    padding: 1rem;
+  }
+
+  .section-header {
+    font-size: 1.25rem;
+  }
+
+  /* Current Order Cards - Mobile */
+  .current-order-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .current-order-card .order-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 2rem;
+  }
+
+  .show-qr-btn {
+    width: 100%;
+    padding: 0.875rem;
+  }
+
+  /* Active Cart Cards - Mobile */
+  .active-cart-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .view-cart-btn {
+    width: 100%;
+    padding: 0.875rem;
+  }
+
+  /* Search - Mobile */
+  .search-input {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Category Filters - Mobile */
+  .category-filters {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .category-filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filter-btn {
+    flex-shrink: 0;
+  }
+}
+
 @media (max-width: 640px) {
   .restaurant-grid {
     grid-template-columns: 1fr;
   }
 
-  .category-filters {
-    flex-wrap: wrap;
-  }
-
   .cart-sidebar {
     width: 100%;
+  }
+
+  .restaurant-card {
+    max-width: 100%;
+  }
+
+  .order-btn {
+    padding: 0.75rem 1rem;
+    min-height: 48px;
   }
 }

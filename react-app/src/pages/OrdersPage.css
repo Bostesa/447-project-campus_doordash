@@ -477,26 +477,49 @@
 }
 
 @media (max-width: 768px) {
+  .content-wrapper {
+    padding: 0 1rem 2rem 1rem;
+  }
+
   .orders-header {
     grid-template-columns: 1fr;
     gap: 1rem;
     text-align: center;
+    padding: 1rem;
   }
 
   .back-btn {
     justify-self: start;
   }
 
+  .section-title {
+    font-size: 1.25rem;
+  }
+
+  .subsection-title {
+    font-size: 1rem;
+  }
+
   .stats-container {
     grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .stat-card {
+    padding: 1rem;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
   }
 
   .order-card {
-    padding-right: 4rem;
+    padding: 1rem;
+    padding-right: 3.5rem;
   }
 
   .food-icon-small {
-    font-size: 2rem;
+    font-size: 1.75rem;
     right: 1rem;
     top: 1rem;
   }
@@ -507,16 +530,31 @@
     gap: 0.75rem;
   }
 
-  .reorder-btn {
+  .reorder-btn,
+  .qr-code-btn {
     width: 100%;
+    min-height: 48px;
   }
 
   .floating-cart-btn {
     bottom: 1rem;
     right: 1rem;
+    padding: 0.875rem 1.25rem;
+    font-size: 1rem;
+    min-height: 56px;
   }
 
   .cart-sidebar {
     width: 100%;
+  }
+
+  .cart-actions {
+    flex-direction: column;
+  }
+
+  .goto-menu-btn,
+  .place-order-btn {
+    width: 100%;
+    min-height: 48px;
   }
 }

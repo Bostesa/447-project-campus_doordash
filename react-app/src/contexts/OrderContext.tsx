@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface OrderItem {
   id: string;
@@ -32,7 +32,24 @@ interface OrderContextType {
 const OrderContext = createContext<OrderContextType | undefined>(undefined);
 
 export function OrderProvider({ children }: { children: ReactNode }) {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<Order[]>(() => {
+    // Load orders from localStorage on initialization
+    const savedOrders = localStorage.getItem('orders');
+    if (savedOrders) {
+      try {
+        return JSON.parse(savedOrders);
+      } catch (error) {
+        console.error('Error loading orders:', error);
+        return [];
+      }
+    }
+    return [];
+  });
+
+  // Save orders to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('orders', JSON.stringify(orders));
+  }, [orders]);
 
   const generatePin = (): string => {
     return Math.floor(1000 + Math.random() * 9000).toString();
