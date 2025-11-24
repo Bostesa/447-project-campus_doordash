@@ -2,6 +2,50 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserType } from '../types';
 import './Login.css';
+import { supabase } from '../lib/supabaseClient';
+
+// generate a UUID v4 (uses crypto.randomUUID if available)
+function generateUuid(): string {
+  try {
+    // @ts-ignore
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  } catch (e) {
+    // ignore and fall back
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+async function ensureProfileExists(username: string, role: string = 'worker') {
+  try {
+    // case-insensitive exact match using ILIKE (no wildcards)
+    const { data: existing, error: selErr } = await supabase
+      .from('profiles')
+      .select('id')
+      .ilike('name', username)
+      .limit(1)
+      .maybeSingle();
+
+    if (selErr) {
+      console.error('Error checking profile existence', selErr);
+      return;
+    }
+
+    if (existing && (existing as any).id) return; // profile exists
+
+    const id = generateUuid();
+    const { error: insErr } = await supabase.from('profiles').insert([
+      { id, name: username, role, created_at: new Date().toISOString() }
+    ]);
+    if (insErr) console.error('Error creating profile', insErr);
+    else console.log('Created profile for', username, 'id=', id);
+  } catch (err) {
+    console.error('Unexpected error ensuring profile', err);
+  }
+}
 
 interface Props {
   onLogin: (type: UserType, username: string) => void;
@@ -18,6 +62,8 @@ export default function WorkerLogin({ onLogin }: Props) {
 
     if (email === 'login' && password === 'login') {
       onLogin('worker', email);
+      // ensure profile exists (non-blocking)
+      ensureProfileExists(email, 'worker').catch(e => console.error(e));
       navigate('/worker-dashboard');
     } else if (email && password) {
       setError("Invalid credentials. Use 'login' for both username and password.");
