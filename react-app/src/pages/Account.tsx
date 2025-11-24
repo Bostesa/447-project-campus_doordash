@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserType } from '../types';
 import Header from '../components/Header';
 import CheckoutModal from '../components/CheckoutModal';
 import { useCart } from '../contexts/CartContext';
 import { useOrders } from '../contexts/OrderContext';
+import { supabase } from '../lib/supabaseClient';
 import './Account.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 interface Props {
   username: string;
@@ -21,6 +23,16 @@ export default function Account({ username, userType, onLogout }: Props) {
   const [showCartSidebar, setShowCartSidebar] = useState(false);
   const [selectedCartId, setSelectedCartId] = useState<string | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
+  // Delivery selection state
+  const [isDorm, setIsDorm] = useState<boolean>(false);
+  const [isApt, setIsApt] = useState<boolean>(false);
+  const [dormChosen, setDormChosen] = useState<boolean>(false);
+  const [aptChosen, setAptChosen] = useState<boolean>(false);
+  const [buildings, setBuildings] = useState<any[]>([]);
+  const [selectedBuilding, setSelectedBuilding] = useState<number | string | null>(null);
+  const [roomNumber, setRoomNumber] = useState<string>('');
+  const [instructions, setInstructions] = useState<string>('');
+  const [saveMsg, setSaveMsg] = useState<string>('');
 
   const totalCartCount = Object.keys(carts).reduce((total, restaurantId) => {
     return total + getCartCount(restaurantId);
@@ -47,6 +59,97 @@ export default function Account({ username, userType, onLogout }: Props) {
     clearCart(selectedCartId);
     setSelectedCartId(null);
   };
+
+  // Load buildings from DB and restore saved delivery location
+  useEffect(() => {
+    let mounted = true;
+    async function loadBuildings() {
+      try {
+        const { data, error } = await supabase.from('buildings').select('*');
+        console.log('[Account] supabase.from(buildings).select(*) returned', { data, error });
+        if (error) {
+          console.error('[Account] Error loading buildings from Supabase', error);
+          return;
+        }
+        if (!mounted) {
+          console.log('[Account] component unmounted before buildings could be set');
+          return;
+        }
+        const rows = Array.isArray(data) ? data : [];
+        console.log('[Account] setting buildings count=', rows.length);
+        setBuildings(rows);
+      } catch (err) {
+        console.error('[Account] Unexpected error loading buildings', err);
+      }
+    }
+
+    loadBuildings();
+
+    // restore saved delivery location if present
+    try {
+      const saved = localStorage.getItem('deliveryLocation');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.isDorm !== undefined && parsed.isDorm !== null) { setIsDorm(Boolean(parsed.isDorm)); setDormChosen(true); }
+        if (parsed.isApt !== undefined && parsed.isApt !== null) { setIsApt(Boolean(parsed.isApt)); setAptChosen(true); }
+        setSelectedBuilding(parsed.buildingId ?? null);
+        setRoomNumber(parsed.roomNumber ?? '');
+        setInstructions(parsed.instructions ?? '');
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    return () => { mounted = false; };
+  }, []);
+
+  const filteredBuildings = buildings.filter(b => {
+    // If building rows don't have expected flags, include them
+    const hasIsDorm = Object.prototype.hasOwnProperty.call(b, 'is_dorm') || Object.prototype.hasOwnProperty.call(b, 'isDorm');
+    const hasIsApt = Object.prototype.hasOwnProperty.call(b, 'is_apt') || Object.prototype.hasOwnProperty.call(b, 'isApt');
+
+    const bIsDorm = hasIsDorm ? Boolean(b.is_dorm ?? b.isDorm) : undefined;
+    const bIsApt = hasIsApt ? Boolean(b.is_apt ?? b.isApt) : undefined;
+
+    // If the user hasn't chosen dorm/apt, don't filter by that flag.
+    if (dormChosen && hasIsDorm && bIsDorm !== isDorm) return false;
+    if (aptChosen && hasIsApt && bIsApt !== isApt) return false;
+    return true;
+  });
+
+  // Debug: log current building/filter state so it's easy to inspect in console
+  useEffect(() => {
+    try {
+      console.log('[Account] buildings.length=', buildings.length);
+      console.log('[Account] dormChosen=', dormChosen, 'isDorm=', isDorm, 'aptChosen=', aptChosen, 'isApt=', isApt);
+      console.log('[Account] filteredBuildings.length=', filteredBuildings.length, 'filteredBuildings=', filteredBuildings.slice(0, 20));
+    } catch (e) {
+      console.error('[Account] Error logging debug info', e);
+    }
+  }, [buildings, dormChosen, isDorm, aptChosen, isApt, filteredBuildings]);
+
+  function validateAndSaveLocation() {
+    setSaveMsg('');
+    if (isDorm === false && (!roomNumber || roomNumber.trim().length === 0)) {
+      setSaveMsg('Room number is required.');
+      return;
+    }
+
+    const payload = {
+      buildingId: selectedBuilding,
+      isDorm,
+      isApt,
+      roomNumber,
+      instructions
+    };
+    try {
+      localStorage.setItem('deliveryLocation', JSON.stringify(payload));
+      setSaveMsg('Delivery location saved.');
+    } catch (e) {
+      console.error('Error saving delivery location', e);
+      setSaveMsg('Failed to save delivery location. See console for details.');
+    }
+  }
 
   return (
     <div className={`account-page ${isWorker ? 'worker' : 'customer'}`}>
@@ -122,35 +225,74 @@ export default function Account({ username, userType, onLogout }: Props) {
           <>
             <div className="settings-section">
               <h3 className="subsection-title">Delivery Address</h3>
-              <div className="settings-card">
-                <div className="form-group">
-                  <label>Campus Building</label>
-                  <input
-                    type="text"
-                    value="Sondheim Hall"
-                    readOnly
-                    className="form-input"
-                  />
+                <div className="settings-card">
+                  <div className="form-group">
+                    <label>Are you in a dorm?</label>
+                    <div className="form-check form-check-inline">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        checked={isDorm}
+                        onChange={e => { setIsDorm(e.target.checked); if (!e.target.checked) setIsApt(false); }}
+                      />
+                    </div>
+                  </div>
+
+                  {isDorm === true && (
+                    <div className="form-group">
+                      <label>Are you in an apartment?</label>
+                      <div className="form-check form-check-inline">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          checked={isApt}
+                          onChange={e => setIsApt(e.target.checked)}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="form-group">
+                    <label>Campus Building</label>
+                    <select
+                      className="form-select"
+                      value={selectedBuilding ?? ''}
+                      onChange={e => setSelectedBuilding(e.target.value || null)}
+                    >
+                      <option value="">Select building...</option>
+                      {filteredBuildings.map(b => (
+                        <option key={b.id} value={b.id}>{b.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {!isDorm && (
+                    <div className="form-group">
+                      <label>Room Number</label>
+                      <input
+                        type="text"
+                        value={roomNumber}
+                        onChange={e => setRoomNumber(e.target.value)}
+                        className="form-control"
+                      />
+                    </div>
+                  )}
+
+                  <div className="form-group">
+                    <label>Special Instructions</label>
+                    <textarea
+                      value={instructions}
+                      onChange={e => setInstructions(e.target.value)}
+                      className="form-control"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <button className="btn btn-primary" onClick={validateAndSaveLocation}>Save Delivery Location</button>
+                    {saveMsg && <div className="alert alert-info mt-2">{saveMsg}</div>}
+                  </div>
                 </div>
-                <div className="form-group">
-                  <label>Room Number</label>
-                  <input
-                    type="text"
-                    value="Room 312"
-                    readOnly
-                    className="form-input"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Special Instructions</label>
-                  <textarea
-                    value="Leave at front desk if not available"
-                    readOnly
-                    className="form-input"
-                    rows={3}
-                  />
-                </div>
-              </div>
             </div>
 
             <div className="settings-section">
