@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useAuth } from './AuthContext';
 
 interface MenuItem {
   id: string;
@@ -32,8 +33,54 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+// Helper to get localStorage key for a user
+const getCartStorageKey = (userId: string | null) => {
+  return userId ? `dormdash_cart_${userId}` : 'dormdash_cart_guest';
+};
+
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [carts, setCarts] = useState<Record<string, RestaurantCart>>({});
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Load cart from localStorage when user changes or on mount
+  useEffect(() => {
+    const storageKey = getCartStorageKey(user?.id ?? null);
+
+    try {
+      const savedCart = localStorage.getItem(storageKey);
+      if (savedCart) {
+        const parsed = JSON.parse(savedCart);
+        setCarts(parsed);
+        console.log('[CartContext] Loaded cart from localStorage:', storageKey);
+      } else {
+        setCarts({});
+      }
+    } catch (error) {
+      console.error('Error loading cart from localStorage:', error);
+      setCarts({});
+    }
+
+    setIsInitialized(true);
+  }, [user?.id]);
+
+  // Save cart to localStorage whenever it changes (after initialization)
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    const storageKey = getCartStorageKey(user?.id ?? null);
+
+    try {
+      if (Object.keys(carts).length > 0) {
+        localStorage.setItem(storageKey, JSON.stringify(carts));
+        console.log('[CartContext] Saved cart to localStorage:', storageKey);
+      } else {
+        localStorage.removeItem(storageKey);
+      }
+    } catch (error) {
+      console.error('Error saving cart to localStorage:', error);
+    }
+  }, [carts, user?.id, isInitialized]);
 
   const addToCart = (restaurantId: string, restaurantName: string, item: MenuItem) => {
     setCarts(prev => {
@@ -75,7 +122,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const newItems = currentCart.items.filter(c => c.item.id !== itemId);
 
       if (newItems.length === 0) {
-        const { [restaurantId]: removed, ...rest } = prev;
+        const { [restaurantId]: _removed, ...rest } = prev;
         return rest;
       }
 
@@ -103,7 +150,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         .filter(c => c.quantity > 0);
 
       if (newItems.length === 0) {
-        const { [restaurantId]: removed, ...rest } = prev;
+        const { [restaurantId]: _removed, ...rest } = prev;
         return rest;
       }
 
@@ -119,7 +166,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = (restaurantId: string) => {
     setCarts(prev => {
-      const { [restaurantId]: removed, ...rest } = prev;
+      const { [restaurantId]: _removed, ...rest } = prev;
       return rest;
     });
   };

@@ -5,6 +5,8 @@
   grid-template-columns: 1fr 2fr 1fr;
   align-items: center;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  position: relative;
+  z-index: 100;
 }
 
 .header-col {
@@ -22,6 +24,7 @@
 
 .header-right {
   justify-content: flex-end;
+  position: relative;
 }
 
 .header-logo {
@@ -91,6 +94,139 @@
   color: #f2b90d;
 }
 
+/* User Menu Styles */
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 2rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.user-menu:hover {
+  background-color: #f3f4f6;
+}
+
+.user-avatar-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-avatar-initials {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f2b90d, #f59e0b);
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-name {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.dropdown-arrow {
+  color: #9ca3af;
+  transition: transform 0.2s;
+}
+
+.user-menu:hover .dropdown-arrow {
+  color: #6b7280;
+}
+
+/* Dropdown Menu */
+.dropdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  min-width: 240px;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.dropdown-header {
+  padding: 1rem;
+  background-color: #f9fafb;
+}
+
+.dropdown-user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.dropdown-name {
+  font-weight: 600;
+  color: #111827;
+  font-size: 0.95rem;
+}
+
+.dropdown-email {
+  color: #6b7280;
+  font-size: 0.8rem;
+  margin-top: 0.125rem;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background-color: #e5e7eb;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: none;
+  background: none;
+  text-align: left;
+  font-size: 0.9rem;
+  color: #374151;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+  background-color: #f3f4f6;
+}
+
+.dropdown-item.sign-out {
+  color: #dc2626;
+}
+
+.dropdown-item.sign-out:hover {
+  background-color: #fef2f2;
+}
+
+.dropdown-icon {
+  font-size: 1rem;
+  width: 1.5rem;
+  text-align: center;
+}
+
+/* Legacy styles - keep for compatibility */
 .user-avatar {
   width: 40px;
   height: 40px;
@@ -112,5 +248,14 @@
 
   .nav-links {
     gap: 1rem;
+  }
+
+  .user-name {
+    display: none;
+  }
+
+  .user-dropdown {
+    right: 50%;
+    transform: translateX(50%);
   }
 }

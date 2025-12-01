@@ -9,31 +9,25 @@
   margin: 0 auto;
 }
 
+.login-page.worker {
+  background-color: #f0f4f8;
+}
+
 .login-logo {
   font-size: 5rem;
   margin-bottom: 1rem;
 }
 
 .login-logo-pac {
+  font-size: 4rem;
   width: 80px;
   height: 80px;
   background-color: #f2b90d;
   border-radius: 50%;
-  position: relative;
-  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 1.5rem;
-}
-
-.login-logo-pac::before {
-  content: '';
-  position: absolute;
-  width: 0;
-  height: 0;
-  border-left: 40px solid #f8f8f5;
-  border-top: 20px solid transparent;
-  border-bottom: 20px solid transparent;
-  right: 0;
-  top: 20px;
 }
 
 h1 {
@@ -49,8 +43,183 @@ h1 {
   color: #6b7280;
   margin-bottom: 2rem;
   font-size: 0.95rem;
+  max-width: 320px;
 }
 
+/* Google Sign-In Button */
+.google-login-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.google-sign-in-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  background-color: #ffffff;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.google-sign-in-btn:hover {
+  background-color: #f9fafb;
+  border-color: #d1d5db;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.google-sign-in-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.google-sign-in-btn.worker {
+  border-color: #007AFF;
+}
+
+.google-sign-in-btn.worker:hover {
+  background-color: #f0f7ff;
+}
+
+.google-icon {
+  flex-shrink: 0;
+}
+
+.umbc-restriction-note {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  text-align: center;
+}
+
+/* Divider */
+.login-divider {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin: 2rem 0;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: #e5e7eb;
+}
+
+.login-divider span {
+  padding: 0 1rem;
+  color: #9ca3af;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Features List */
+.login-features {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background-color: rgba(255, 255, 255, 0.6);
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.feature-icon {
+  font-size: 1.25rem;
+  width: 2rem;
+  text-align: center;
+}
+
+/* Back Link */
+.back-to-home {
+  margin-top: 2rem;
+}
+
+.back-link {
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: color 0.2s;
+}
+
+.back-link:hover {
+  color: #f2b90d;
+}
+
+/* Error Message */
+.error-message {
+  background-color: #fee2e2;
+  color: #991b1b;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  width: 100%;
+  text-align: center;
+}
+
+.success-message {
+  background-color: #d1fae5;
+  color: #065f46;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  width: 100%;
+  text-align: center;
+}
+
+/* Loading State */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  color: #6b7280;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #f2b90d;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Old form styles (keep for fallback/reference) */
 .login-form {
   background-color: rgba(255, 255, 255, 0.6);
   padding: 2rem;
@@ -103,25 +272,6 @@ h1 {
   text-decoration: underline;
 }
 
-.error-message {
-  background-color: #fee2e2;
-  color: #991b1b;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-  margin-bottom: 1rem;
-  font-size: 0.875rem;
-}
-
-.success-message {
-  background-color: #d1fae5;
-  color: #065f46;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-  margin-bottom: 1rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
 .login-button {
   background-color: #f2b90d;
   color: #221e10;
@@ -160,4 +310,21 @@ h1 {
 
 .signup-link:hover {
   text-decoration: underline;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .login-page {
+    padding: 2rem 1.5rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  .google-sign-in-btn {
+    font-size: 0.9rem;
+    padding: 0.875rem 1.25rem;
+    min-height: 48px;
+  }
 }

@@ -264,6 +264,46 @@
   padding: 2rem;
 }
 
+.restaurant-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f2b90d 0%, #fbbf24 100%);
+  padding: 0;
+}
+
+.restaurant-initial {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #000;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.closed-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.restaurant-card.closed {
+  opacity: 0.85;
+}
+
+.restaurant-card.closed:hover {
+  opacity: 1;
+}
+
 .card-content {
   padding: 1rem 1.25rem;
   flex-grow: 1;
@@ -278,11 +318,48 @@
   margin-bottom: 0.25rem;
 }
 
+.restaurant-location {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin-bottom: 0.5rem;
+}
+
 .restaurant-hours {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.restaurant-hours.open {
+  color: #16a34a;
+}
+
+.restaurant-hours.closed {
+  color: #dc2626;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.open {
+  background-color: #16a34a;
+}
+
+.status-dot.closed {
+  background-color: #dc2626;
+}
+
+.delivery-time {
+  font-size: 0.8rem;
   color: #6b7280;
   margin-bottom: 1rem;
-  flex-grow: 1;
 }
 
 .order-btn {
@@ -302,6 +379,40 @@
 .order-btn:hover {
   background-color: #d9a50c;
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Loading State */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  color: #6b7280;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #f2b90d;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* No Results */
+.no-results {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #6b7280;
+  font-size: 1rem;
 }
 
 /* Footer */

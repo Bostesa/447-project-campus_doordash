@@ -1,15 +1,106 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import CheckoutModal from '../components/CheckoutModal';
 import OrderQRCode from '../components/OrderQRCode';
+import OrderStatusTracker from '../components/OrderStatusTracker';
 import { useCart } from '../contexts/CartContext';
 import { useOrders } from '../contexts/OrderContext';
+import { supabase } from '../lib/supabaseClient';
 import './RestaurantBrowse.css';
+
+interface Restaurant {
+  id: number;
+  name: string;
+  slug: string;
+  location: string;
+}
+
+interface OperatingHours {
+  restaurant_id: number;
+  day_of_week: number;
+  opens_at: string | null;
+  closes_at: string | null;
+  is_closed: boolean;
+}
 
 interface Props {
   username: string;
   onLogout: () => void;
+}
+
+// Helper to format time from "HH:MM:SS" to "X AM/PM"
+function formatTime(time: string | null): string {
+  if (!time) return '';
+  const [hours, minutes] = time.split(':').map(Number);
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const displayHours = hours % 12 || 12;
+  if (minutes === 0) {
+    return `${displayHours} ${ampm}`;
+  }
+  return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+}
+
+// Check if restaurant is currently open
+function isCurrentlyOpen(hours: OperatingHours | undefined): boolean {
+  if (!hours || hours.is_closed || !hours.opens_at || !hours.closes_at) {
+    return false;
+  }
+
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  const [openH, openM] = hours.opens_at.split(':').map(Number);
+  const [closeH, closeM] = hours.closes_at.split(':').map(Number);
+
+  const openMinutes = openH * 60 + openM;
+  const closeMinutes = closeH * 60 + closeM;
+
+  return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
+}
+
+// Get status text for restaurant
+function getStatusText(hours: OperatingHours | undefined, allHours: OperatingHours[]): string {
+  if (!hours || hours.is_closed) {
+    // Find next open day
+    const today = new Date().getDay();
+    for (let i = 1; i <= 7; i++) {
+      const nextDay = (today + i) % 7;
+      const nextHours = allHours.find(h => h.day_of_week === nextDay && !h.is_closed);
+      if (nextHours && nextHours.opens_at) {
+        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        return `Closed · Opens ${dayNames[nextDay]} ${formatTime(nextHours.opens_at)}`;
+      }
+    }
+    return 'Closed';
+  }
+
+  if (isCurrentlyOpen(hours)) {
+    return `Open · ${formatTime(hours.opens_at)} - ${formatTime(hours.closes_at)}`;
+  } else {
+    // Check if opens later today
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const [openH, openM] = (hours.opens_at || '0:0').split(':').map(Number);
+    const openMinutes = openH * 60 + openM;
+
+    if (currentMinutes < openMinutes) {
+      return `Closed · Opens at ${formatTime(hours.opens_at)}`;
+    }
+    return `Closed · Opens tomorrow`;
+  }
+}
+
+// Get a fake delivery time based on location
+function getDeliveryTime(location: string): string {
+  const times: Record<string, string> = {
+    'Commons': '10-15 min',
+    'University Center': '15-20 min',
+    'AOK Library': '10-15 min',
+    'Admin': '20-25 min',
+    'True Grits': '15-20 min',
+  };
+  return times[location] || '15-25 min';
 }
 
 export default function RestaurantBrowse(_props: Props) {
@@ -21,6 +112,63 @@ export default function RestaurantBrowse(_props: Props) {
   const [showCheckout, setShowCheckout] = useState(false);
   const [showQRCode, setShowQRCode] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<{ id: string; restaurant: string; total: number; verificationCode: string; pin: string } | null>(null);
+
+  // Supabase data
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [operatingHours, setOperatingHours] = useState<OperatingHours[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+
+  // Fetch restaurants and operating hours
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+
+      const [restaurantsRes, hoursRes] = await Promise.all([
+        supabase.from('restaurants').select('*').order('name'),
+        supabase.from('operating_hours').select('*')
+      ]);
+
+      if (restaurantsRes.data) {
+        setRestaurants(restaurantsRes.data);
+      }
+
+      if (hoursRes.data) {
+        setOperatingHours(hoursRes.data);
+      }
+
+      setLoading(false);
+    }
+
+    fetchData();
+  }, []);
+
+  // Get today's hours for a restaurant
+  const getTodayHours = (restaurantId: number): OperatingHours | undefined => {
+    const today = new Date().getDay();
+    return operatingHours.find(h => h.restaurant_id === restaurantId && h.day_of_week === today);
+  };
+
+  // Get all hours for a restaurant (for finding next open day)
+  const getRestaurantHours = (restaurantId: number): OperatingHours[] => {
+    return operatingHours.filter(h => h.restaurant_id === restaurantId);
+  };
+
+  // Filter restaurants based on search and location
+  const filteredRestaurants = restaurants.filter(restaurant => {
+    const matchesSearch = restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         restaurant.location.toLowerCase().includes(searchQuery.toLowerCase());
+
+    if (selectedCategory === 'All') return matchesSearch;
+
+    // Location-based filtering
+    const locationLower = restaurant.location.toLowerCase();
+    const selectedLower = selectedCategory.toLowerCase();
+
+    // Match location filter to restaurant location
+    return matchesSearch && locationLower.includes(selectedLower);
+  });
 
   const handleViewCart = (e: React.MouseEvent, restaurantId: string) => {
     e.stopPropagation();
@@ -34,18 +182,30 @@ export default function RestaurantBrowse(_props: Props) {
     setShowCheckout(true);
   };
 
-  const handleConfirmOrder = (paymentMethod: string, tip: number) => {
+  const handleConfirmOrder = async (paymentMethod: string, tip: number) => {
     if (!selectedCartId) return;
 
     const selectedCart = carts[selectedCartId];
     const subtotal = getCartTotal(selectedCartId);
     const totalWithTipAndFees = subtotal + 2.99 + 1.50 + tip;
 
-    // Save the order
-    addOrder(selectedCartId, selectedCart.restaurantName, selectedCart.items, totalWithTipAndFees);
+    // Save the order to Supabase
+    const order = await addOrder(
+      selectedCartId,
+      selectedCart.restaurantName,
+      selectedCart.items,
+      totalWithTipAndFees,
+      tip
+    );
 
     setShowCheckout(false);
-    alert(`Order confirmed!\n\nPayment: ${paymentMethod}\nTip: $${tip.toFixed(2)}\nTotal: $${totalWithTipAndFees.toFixed(2)}\n\nYour food will be delivered soon!`);
+
+    if (order) {
+      alert(`Order confirmed!\n\nOrder Code: ${order.verificationCode}\nPIN: ${order.pin}\n\nPayment: ${paymentMethod}\nTip: $${tip.toFixed(2)}\nTotal: $${totalWithTipAndFees.toFixed(2)}\n\nYour food will be delivered soon!`);
+    } else {
+      alert(`Order confirmed!\n\nPayment: ${paymentMethod}\nTip: $${tip.toFixed(2)}\nTotal: $${totalWithTipAndFees.toFixed(2)}\n\nYour food will be delivered soon!`);
+    }
+
     clearCart(selectedCartId);
     setSelectedCartId(null);
     navigate('/customer-orders');
@@ -53,8 +213,13 @@ export default function RestaurantBrowse(_props: Props) {
 
   const selectedCart = selectedCartId ? carts[selectedCartId] : null;
 
-  // Get current orders
-  const currentOrders = orders.filter(order => order.status === 'in_progress');
+  // Get current orders (pending, claimed, preparing, or delivering)
+  const currentOrders = orders.filter(order =>
+    order.status === 'pending' ||
+    order.status === 'claimed' ||
+    order.status === 'preparing' ||
+    order.status === 'delivering'
+  );
 
   const handleShowQRCode = (order: typeof orders[0]) => {
     setSelectedOrder({
@@ -66,45 +231,6 @@ export default function RestaurantBrowse(_props: Props) {
     });
     setShowQRCode(true);
   };
-
-  const restaurants = [
-    {
-      id: "chick-fil-a",
-      name: "Chick-fil-A",
-      hours: "Open · 8 AM - 8 PM",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Chick-fil-A_Logo.svg/2560px-Chick-fil-A_Logo.svg.png"
-    },
-    {
-      id: "starbucks",
-      name: "Starbucks",
-      hours: "Open · 7 AM - 9 PM",
-      image: "https://upload.wikimedia.org/wikipedia/en/thumb/d/d3/Starbucks_Corporation_Logo_2011.svg/1200px-Starbucks_Corporation_Logo_2011.svg.png"
-    },
-    {
-      id: "dining-hall",
-      name: "Dining Hall",
-      hours: "Open · 7 AM - 10 PM",
-      image: "https://styleguide.umbc.edu/wp-content/uploads/sites/113/2019/01/UMBC-primary-logo-RGB.png"
-    },
-    {
-      id: "einstein-bros-bagels",
-      name: "Einstein Bros Bagels",
-      hours: "Open · 7 AM - 3 PM",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2CVpnPv0cMM34s6fzvCWqF_8d4BzpCdklQA&s"
-    },
-    {
-      id: "the-commons",
-      name: "The Commons",
-      hours: "Open · 11 AM - 11 PM",
-      image: "https://styleguide.umbc.edu/wp-content/uploads/sites/113/2019/01/UMBC-primary-logo-RGB.png"
-    },
-    {
-      id: "dunkin-donuts",
-      name: "Dunkin Donuts",
-      hours: "Open · 6 AM - 8 PM",
-      image: "https://1000logos.net/wp-content/uploads/2023/04/Dunkin-Donuts-logo.png"
-    }
-  ];
 
   return (
     <div className="restaurant-browse">
@@ -119,6 +245,16 @@ export default function RestaurantBrowse(_props: Props) {
               const itemCount = order.items.reduce((sum, item) => sum + item.quantity, 0);
               const firstItem = order.items[0];
 
+              const getStatusBadge = (status: string) => {
+                switch (status) {
+                  case 'pending': return 'Waiting for Dasher';
+                  case 'claimed': return 'Dasher Assigned';
+                  case 'preparing': return 'Preparing';
+                  case 'delivering': return 'On the Way';
+                  default: return 'In Progress';
+                }
+              };
+
               return (
                 <div
                   key={order.id}
@@ -126,11 +262,12 @@ export default function RestaurantBrowse(_props: Props) {
                 >
                   <div className="order-icon">{firstItem.icon}</div>
                   <div className="order-info">
-                    <div className="order-status-badge">⏱ In Progress</div>
+                    <div className="order-status-badge">{getStatusBadge(order.status)}</div>
                     <div className="order-restaurant-name">{order.restaurant}</div>
                     <div className="order-item-count">
                       {itemCount} item{itemCount !== 1 ? 's' : ''} • ${order.total.toFixed(2)}
                     </div>
+                    <OrderStatusTracker status={order.status} compact />
                     <div className="order-time">{order.date}</div>
                   </div>
                   <button
@@ -179,45 +316,79 @@ export default function RestaurantBrowse(_props: Props) {
           <input
             type="text"
             className="search-input"
-            placeholder="Search for food or venues..."
+            placeholder="Search for restaurants..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
 
-        {/* Category filters */}
+        {/* Location filters */}
         <div className="category-filters">
-          <button className="filter-btn active">All</button>
-          <button className="filter-btn">Dining Hall</button>
-          <button className="filter-btn">Café</button>
-          <button className="filter-btn">Quick Bites</button>
-        </div>
-
-        {/* Restaurant grid */}
-        <div className="restaurant-grid">
-          {restaurants.map((restaurant, index) => (
-            <div key={index} className="restaurant-card">
-              <div className="restaurant-image-wrapper">
-                <div
-                  className="restaurant-image"
-                  style={{ backgroundImage: `url(${restaurant.image})` }}
-                ></div>
-              </div>
-              <div className="card-content">
-                <div className="restaurant-name">{restaurant.name}</div>
-                <div className="restaurant-hours">{restaurant.hours}</div>
-                <button
-                  className="order-btn"
-                  onClick={() => navigate(`/restaurant/${restaurant.id}`)}
-                >
-                  Order Now
-                </button>
-              </div>
-            </div>
+          {['All', 'Commons', 'University Center', 'AOK Library', 'True Grits', 'Admin'].map(location => (
+            <button
+              key={location}
+              className={`filter-btn ${selectedCategory === location ? 'active' : ''}`}
+              onClick={() => setSelectedCategory(location)}
+            >
+              {location}
+            </button>
           ))}
         </div>
 
+        {/* Restaurant grid */}
+        {loading ? (
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+            <p>Loading restaurants...</p>
+          </div>
+        ) : (
+          <div className="restaurant-grid">
+            {filteredRestaurants.map((restaurant) => {
+              const todayHours = getTodayHours(restaurant.id);
+              const allRestaurantHours = getRestaurantHours(restaurant.id);
+              const isOpen = isCurrentlyOpen(todayHours);
+              const statusText = getStatusText(todayHours, allRestaurantHours);
+              const deliveryTime = getDeliveryTime(restaurant.location);
+
+              return (
+                <div key={restaurant.id} className={`restaurant-card ${!isOpen ? 'closed' : ''}`}>
+                  <div className="restaurant-image-wrapper">
+                    <div className="restaurant-image restaurant-placeholder">
+                      <span className="restaurant-initial">{restaurant.name.charAt(0)}</span>
+                    </div>
+                    {!isOpen && <div className="closed-overlay">Currently Closed</div>}
+                  </div>
+                  <div className="card-content">
+                    <div className="restaurant-name">{restaurant.name}</div>
+                    <div className="restaurant-location">{restaurant.location}</div>
+                    <div className={`restaurant-hours ${isOpen ? 'open' : 'closed'}`}>
+                      <span className={`status-dot ${isOpen ? 'open' : 'closed'}`}></span>
+                      {statusText}
+                    </div>
+                    <div className="delivery-time">{deliveryTime}</div>
+                    <button
+                      className="order-btn"
+                      onClick={() => navigate(`/restaurant/${restaurant.slug}`)}
+                    >
+                      {isOpen ? 'Order Now' : 'View Menu'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* No results */}
+        {!loading && filteredRestaurants.length === 0 && (
+          <div className="no-results">
+            <p>No restaurants found matching "{searchQuery}"</p>
+          </div>
+        )}
+
         {/* Footer */}
         <div className="campus-footer">
-          © 2024 Campus Eats. All Rights Reserved.<br />
+          © 2024 DormDash. All Rights Reserved.<br />
           Part of the UMBC Dining Experience.
         </div>
       </div>
@@ -249,7 +420,7 @@ export default function RestaurantBrowse(_props: Props) {
                       <button onClick={() => selectedCartId && updateQuantity(selectedCartId, item.id, 1)}>+</button>
                     </div>
                     <button className="remove-btn" onClick={() => selectedCartId && removeFromCart(selectedCartId, item.id)}>
-                      🗑️
+                      Remove
                     </button>
                   </div>
                 ))

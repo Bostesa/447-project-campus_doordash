@@ -1,5 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabaseClient';
 import './CheckoutModal.css';
+
+interface DeliveryLocation {
+  buildingId: string | number | null;
+  isDorm: boolean;
+  isApt: boolean;
+  roomNumber: string;
+  instructions: string;
+}
 
 interface CartItem {
   item: {
@@ -16,7 +25,7 @@ interface Props {
   items: CartItem[];
   subtotal: number;
   onClose: () => void;
-  onConfirmOrder: (paymentMethod: string, tip: number) => void;
+  onConfirmOrder: (paymentMethod: string, tip: number, deliveryInfo?: string) => void;
 }
 
 export default function CheckoutModal({ restaurantName, items, subtotal, onClose, onConfirmOrder }: Props) {
@@ -24,6 +33,55 @@ export default function CheckoutModal({ restaurantName, items, subtotal, onClose
   const [selectedTip, setSelectedTip] = useState<number>(3);
   const [customTip, setCustomTip] = useState('');
   const [deliveryInstructions, setDeliveryInstructions] = useState('');
+  const [deliveryAddress, setDeliveryAddress] = useState<string>('No address set');
+
+  // Load saved delivery location and fetch building name
+  useEffect(() => {
+    async function loadDeliveryAddress() {
+      try {
+        const saved = localStorage.getItem('deliveryLocation');
+        if (!saved) {
+          setDeliveryAddress('No address set - please update in Account settings');
+          return;
+        }
+
+        const location: DeliveryLocation = JSON.parse(saved);
+
+        // Pre-fill delivery instructions from saved location
+        if (location.instructions) {
+          setDeliveryInstructions(location.instructions);
+        }
+
+        // Fetch building name from Supabase
+        if (location.buildingId) {
+          const { data: building, error } = await supabase
+            .from('buildings')
+            .select('name')
+            .eq('id', location.buildingId)
+            .single();
+
+          if (error) {
+            console.error('[CheckoutModal] Error fetching building:', error);
+            setDeliveryAddress('Building not found');
+            return;
+          }
+
+          if (building) {
+            const roomPart = location.roomNumber ? `, Room ${location.roomNumber}` : '';
+            const typePart = location.isDorm ? ' (Dorm)' : '';
+            setDeliveryAddress(`${building.name}${roomPart}${typePart}`);
+          }
+        } else {
+          setDeliveryAddress('No building selected - please update in Account settings');
+        }
+      } catch (err) {
+        console.error('[CheckoutModal] Error loading delivery address:', err);
+        setDeliveryAddress('Error loading address');
+      }
+    }
+
+    loadDeliveryAddress();
+  }, []);
 
   const deliveryFee = 2.99;
   const serviceFee = 1.50;
@@ -38,7 +96,11 @@ export default function CheckoutModal({ restaurantName, items, subtotal, onClose
   ];
 
   const handleConfirm = () => {
-    onConfirmOrder(paymentMethod, tipAmount);
+    // Combine delivery address with any additional instructions
+    const fullDeliveryInfo = deliveryInstructions
+      ? `${deliveryAddress}\n\nInstructions: ${deliveryInstructions}`
+      : deliveryAddress;
+    onConfirmOrder(paymentMethod, tipAmount, fullDeliveryInfo);
   };
 
   return (
@@ -70,11 +132,11 @@ export default function CheckoutModal({ restaurantName, items, subtotal, onClose
             <h3 className="checkout-section-title">Delivery Details</h3>
             <div className="delivery-info">
               <div className="info-row">
-                <span className="info-label">📍 Location</span>
-                <span className="info-value">Sondheim Hall, Room 312</span>
+                <span className="info-label">Location</span>
+                <span className="info-value">{deliveryAddress}</span>
               </div>
               <div className="info-row">
-                <span className="info-label">⏱️ Estimated Time</span>
+                <span className="info-label">Estimated Time</span>
                 <span className="info-value">15-25 min</span>
               </div>
             </div>
@@ -133,21 +195,18 @@ export default function CheckoutModal({ restaurantName, items, subtotal, onClose
                 className={`payment-btn ${paymentMethod === 'apple-pay' ? 'active' : ''}`}
                 onClick={() => setPaymentMethod('apple-pay')}
               >
-                <span className="payment-icon">🍎</span>
                 <span className="payment-text">Apple Pay</span>
               </button>
               <button
                 className={`payment-btn ${paymentMethod === 'card' ? 'active' : ''}`}
                 onClick={() => setPaymentMethod('card')}
               >
-                <span className="payment-icon">💳</span>
-                <span className="payment-text">Credit Card •••• 4242</span>
+                <span className="payment-text">Credit Card .... 4242</span>
               </button>
               <button
                 className={`payment-btn ${paymentMethod === 'cash' ? 'active' : ''}`}
                 onClick={() => setPaymentMethod('cash')}
               >
-                <span className="payment-icon">💵</span>
                 <span className="payment-text">Cash</span>
               </button>
             </div>

@@ -79,7 +79,7 @@ export default function QRScanner({ onScan, onClose }: Props) {
         <div className="qr-scanner-content">
           {error ? (
             <div className="qr-error">
-              <span className="error-icon">⚠️</span>
+              <span className="error-icon">!</span>
               <p>{error}</p>
               <button className="retry-btn" onClick={startScanner}>
                 Try Again

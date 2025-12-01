@@ -5,6 +5,7 @@ import { useOrders } from '../contexts/OrderContext';
 import Header from '../components/Header';
 import CheckoutModal from '../components/CheckoutModal';
 import OrderQRCode from '../components/OrderQRCode';
+import OrderStatusTracker from '../components/OrderStatusTracker';
 import './OrdersPage.css';
 
 interface Props {
@@ -42,18 +43,24 @@ export default function CustomerOrders(_props: Props) {
     setShowCheckout(true);
   };
 
-  const handleConfirmOrder = (paymentMethod: string, tip: number) => {
+  const handleConfirmOrder = async (paymentMethod: string, tip: number) => {
     if (!selectedCartId) return;
 
     const cart = carts[selectedCartId];
     const subtotal = getCartTotal(selectedCartId);
     const totalWithTipAndFees = subtotal + 2.99 + 1.50 + tip;
 
-    // Save the order
-    addOrder(selectedCartId, cart.restaurantName, cart.items, totalWithTipAndFees);
+    // Save the order to Supabase
+    const order = await addOrder(selectedCartId, cart.restaurantName, cart.items, totalWithTipAndFees, tip);
 
     setShowCheckout(false);
-    alert(`Order confirmed!\n\nPayment: ${paymentMethod}\nTip: $${tip.toFixed(2)}\nTotal: $${totalWithTipAndFees.toFixed(2)}\n\nYour food will be delivered soon!`);
+
+    if (order) {
+      alert(`Order confirmed!\n\nOrder Code: ${order.verificationCode}\nPIN: ${order.pin}\n\nPayment: ${paymentMethod}\nTip: $${tip.toFixed(2)}\nTotal: $${totalWithTipAndFees.toFixed(2)}\n\nYour food will be delivered soon!`);
+    } else {
+      alert(`Order confirmed!\n\nPayment: ${paymentMethod}\nTip: $${tip.toFixed(2)}\nTotal: $${totalWithTipAndFees.toFixed(2)}\n\nYour food will be delivered soon!`);
+    }
+
     clearCart(selectedCartId);
     setSelectedCartId(null);
   };
@@ -63,7 +70,8 @@ export default function CustomerOrders(_props: Props) {
     const itemCount = order.items.reduce((sum, item) => sum + item.quantity, 0);
     const firstItem = order.items[0];
     const title = itemCount === 1 ? firstItem.name : `${firstItem.name} & ${itemCount - 1} more`;
-    const details = `${itemCount} item${itemCount !== 1 ? 's' : ''} • ${order.status === 'in_progress' ? 'In Progress' : 'Delivered to Sondheim Hall'}`;
+    const isInProgress = order.status === 'pending' || order.status === 'claimed' || order.status === 'preparing' || order.status === 'delivering';
+    const details = `${itemCount} item${itemCount !== 1 ? 's' : ''} • ${isInProgress ? 'In Progress' : 'Delivered to Sondheim Hall'}`;
 
     return {
       orderId: order.id,
@@ -92,69 +100,71 @@ export default function CustomerOrders(_props: Props) {
       date: "Today, 2:45 PM",
       restaurant: "Commons",
       title: "Cheeseburger & Fries",
-      details: "2 items • Delivered to Sondheim Hall",
+      details: "2 items - Delivered to Sondheim Hall",
       total: "$18.50",
       status: "delivered" as const,
-      icon: "🍔",
+      icon: "",
       items: [
-        { id: '1', name: 'Cheeseburger', description: 'Juicy beef patty with cheese, lettuce, tomato', price: 9.50, category: 'Burgers', icon: '🍔' },
-        { id: '2', name: 'Classic Fries', description: 'Crispy golden fries', price: 3.50, category: 'Sides', icon: '🍟' }
+        { id: '1', name: 'Cheeseburger', description: 'Juicy beef patty with cheese, lettuce, tomato', price: 9.50, category: 'Burgers', icon: '' },
+        { id: '2', name: 'Classic Fries', description: 'Crispy golden fries', price: 3.50, category: 'Sides', icon: '' }
       ]
     },
     {
       date: "Today, 1:30 PM",
       restaurant: "Chick fil A",
       title: "Spicy Chicken Sandwich Meal",
-      details: "2 items • Delivered to Chesapeake Hall",
+      details: "2 items - Delivered to Chesapeake Hall",
       total: "$14.75",
       status: "delivered" as const,
-      icon: "🍗",
+      icon: "",
       items: [
-        { id: '2', name: 'Spicy Deluxe Sandwich', description: 'Spicy chicken with lettuce & tomato', price: 6.49, category: 'Entrees', icon: '🔥' },
-        { id: '4', name: 'Waffle Fries', description: 'Crispy waffle-cut fries', price: 2.99, category: 'Sides', icon: '🍟' }
+        { id: '2', name: 'Spicy Deluxe Sandwich', description: 'Spicy chicken with lettuce & tomato', price: 6.49, category: 'Entrees', icon: '' },
+        { id: '4', name: 'Waffle Fries', description: 'Crispy waffle-cut fries', price: 2.99, category: 'Sides', icon: '' }
       ]
     },
     {
       date: "Today, 12:15 PM",
       restaurant: "Starbucks",
       title: "Coffee & Pastries",
-      details: "3 items • In Progress",
+      details: "3 items - In Progress",
       total: "$16.25",
       status: "in_progress" as const,
-      icon: "☕",
+      icon: "",
       items: [
-        { id: '1', name: 'Caramel Macchiato', description: 'Espresso with vanilla and caramel', price: 5.25, category: 'Hot Drinks', icon: '☕' },
-        { id: '4', name: 'Blueberry Muffin', description: 'Fresh baked muffin', price: 3.25, category: 'Food', icon: '🧁' }
+        { id: '1', name: 'Caramel Macchiato', description: 'Espresso with vanilla and caramel', price: 5.25, category: 'Hot Drinks', icon: '' },
+        { id: '4', name: 'Blueberry Muffin', description: 'Fresh baked muffin', price: 3.25, category: 'Food', icon: '' }
       ]
     },
     {
       date: "Today, 11:00 AM",
       restaurant: "The Commons",
       title: "Chipotle Bowl",
-      details: "1 item • Delivered to Library",
+      details: "1 item - Delivered to Library",
       total: "$12.00",
       status: "delivered" as const,
-      icon: "🥗",
+      icon: "",
       items: [
-        { id: '4', name: 'Veggie Wrap', description: 'Fresh vegetables in a wrap', price: 7.99, category: 'Wraps', icon: '🌯' }
+        { id: '4', name: 'Veggie Wrap', description: 'Fresh vegetables in a wrap', price: 7.99, category: 'Wraps', icon: '' }
       ]
     },
     {
       date: "Yesterday, 6:45 PM",
       restaurant: "Einstein Bros",
       title: "Bagel Sandwich",
-      details: "1 item • Cancelled",
+      details: "1 item - Cancelled",
       total: "$0.00",
       status: "cancelled" as const,
-      icon: "🥯",
+      icon: "",
       items: [
-        { id: '2', name: 'Bacon Egg & Cheese', description: 'On a toasted bagel', price: 6.49, category: 'Sandwiches', icon: '🥓' }
+        { id: '2', name: 'Bacon Egg & Cheese', description: 'On a toasted bagel', price: 6.49, category: 'Sandwiches', icon: '' }
       ]
     }
   ];
 
   // Separate current and past orders
-  const currentOrders = displaySavedOrders.filter(order => order.status === 'in_progress');
+  const currentOrders = displaySavedOrders.filter(order =>
+    order.status === 'pending' || order.status === 'claimed' || order.status === 'preparing' || order.status === 'delivering'
+  );
   const pastOrders = displaySavedOrders.filter(order => order.status === 'delivered' || order.status === 'cancelled');
 
   // Only show placeholder orders if there are no real orders
@@ -205,7 +215,7 @@ export default function CustomerOrders(_props: Props) {
 
       {totalCartCount > 0 && (
         <button className="floating-cart-btn" onClick={() => setShowCartSidebar(true)}>
-          🛒 {totalCartCount}
+          Cart ({totalCartCount})
         </button>
       )}
 
@@ -232,16 +242,18 @@ export default function CustomerOrders(_props: Props) {
             <h3 className="subsection-title">Current Orders</h3>
             {currentOrders.map((order, index) => (
               <div key={index} className="order-card customer highlighted">
-                <div className="food-icon-small">{order.icon}</div>
                 <div className="order-header">
                   <div className="order-date">{order.date}</div>
                   <div className={`order-status ${order.status}`}>
-                    ⏱ In Progress
+                    {order.status === 'pending' && 'Waiting for Dasher'}
+                    {order.status === 'claimed' && 'Dasher Assigned'}
+                    {order.status === 'preparing' && 'Preparing'}
+                    {order.status === 'delivering' && 'On the Way'}
                   </div>
                 </div>
                 <div className="order-from">Order from {order.restaurant}</div>
                 <div className="order-title">{order.title}</div>
-                <div className="order-details">{order.details}</div>
+                <OrderStatusTracker status={order.status as any} compact />
                 <div className="order-footer">
                   <div className="order-total">Total: {order.total}</div>
                   <button
@@ -261,11 +273,10 @@ export default function CustomerOrders(_props: Props) {
             <h3 className="subsection-title" style={{ marginTop: currentOrders.length > 0 ? '2rem' : '0' }}>Past Orders</h3>
             {pastOrders.map((order, index) => (
               <div key={index} className="order-card customer">
-                <div className="food-icon-small">{order.icon}</div>
                 <div className="order-header">
                   <div className="order-date">{order.date}</div>
                   <div className={`order-status ${order.status}`}>
-                    {order.status === 'delivered' ? '✓ Delivered' : '✗ Cancelled'}
+                    {order.status === 'delivered' ? 'Delivered' : 'Cancelled'}
                   </div>
                 </div>
                 <div className="order-from">Order from {order.restaurant}</div>
@@ -292,12 +303,11 @@ export default function CustomerOrders(_props: Props) {
             <h3 className="subsection-title">Example Orders</h3>
             {placeholderOrders.map((order, index) => (
               <div key={index} className="order-card customer">
-                <div className="food-icon-small">{order.icon}</div>
                 <div className="order-header">
                   <div className="order-date">{order.date}</div>
                   <div className={`order-status ${order.status}`}>
-                    {order.status === 'delivered' ? '✓ Delivered' :
-                     order.status === 'in_progress' ? '⏱ In Progress' : '✗ Cancelled'}
+                    {order.status === 'delivered' ? 'Delivered' :
+                     order.status === 'in_progress' ? 'In Progress' : 'Cancelled'}
                   </div>
                 </div>
                 <div className="order-from">Order from {order.restaurant}</div>
@@ -364,7 +374,7 @@ export default function CustomerOrders(_props: Props) {
                             <button onClick={() => updateQuantity(restaurantId, item.id, 1)}>+</button>
                           </div>
                           <button className="remove-btn" onClick={() => removeFromCart(restaurantId, item.id)}>
-                            🗑️
+                            Remove
                           </button>
                         </div>
                       ))}

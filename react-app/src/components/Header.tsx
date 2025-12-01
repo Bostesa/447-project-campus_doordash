@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import './Header.css';
 
 interface Props {
@@ -9,19 +11,36 @@ interface Props {
 
 export default function Header({ userType, activeTab, showLogo = true }: Props) {
   const navigate = useNavigate();
+  const { profile, signOut } = useAuth();
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const isWorker = userType === 'worker';
-  const logoIcon = isWorker ? '🚗' : '🎓';
   const logoText = 'DormDash';
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  // Get initials from name
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(part => part.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   return (
     <div className="header">
       <div className="header-col header-left">
         {showLogo && (
           <div className="header-logo">
-            <div className={`logo-icon ${isWorker ? 'worker' : 'customer'}`}>
-              {logoIcon}
-            </div>
             <div className="logo-text">{logoText}</div>
           </div>
         )}
@@ -76,7 +95,37 @@ export default function Header({ userType, activeTab, showLogo = true }: Props) 
       </div>
 
       <div className="header-col header-right">
-        <div className="user-avatar"></div>
+        <div className="user-menu" onClick={() => setShowDropdown(!showDropdown)}>
+          <div className="user-avatar-initials">
+            {profile?.name ? getInitials(profile.name) : '?'}
+          </div>
+          <span className="user-name">{profile?.name?.split(' ')[0] || 'User'}</span>
+          <svg className="dropdown-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="m6 9 6 6 6-6"/>
+          </svg>
+        </div>
+
+        {showDropdown && (
+          <>
+            <div className="dropdown-overlay" onClick={() => setShowDropdown(false)} />
+            <div className="user-dropdown">
+              <div className="dropdown-header">
+                <div className="dropdown-user-info">
+                  <span className="dropdown-name">{profile?.name || 'User'}</span>
+                  <span className="dropdown-email">{profile?.email || ''}</span>
+                </div>
+              </div>
+              <div className="dropdown-divider" />
+              <button className="dropdown-item" onClick={() => { navigate('/account'); setShowDropdown(false); }}>
+                Account Settings
+              </button>
+              <div className="dropdown-divider" />
+              <button className="dropdown-item sign-out" onClick={handleSignOut}>
+                Sign Out
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

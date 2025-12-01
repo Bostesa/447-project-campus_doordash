@@ -5,6 +5,7 @@ import Header from '../components/Header';
 import CheckoutModal from '../components/CheckoutModal';
 import { useCart } from '../contexts/CartContext';
 import { useOrders } from '../contexts/OrderContext';
+import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import './Account.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -15,7 +16,8 @@ interface Props {
   onLogout: () => void;
 }
 
-export default function Account({ username, userType, onLogout }: Props) {
+export default function Account({ userType, onLogout }: Props) {
+  const { profile } = useAuth();
   const navigate = useNavigate();
   const isWorker = userType === 'worker';
   const { carts, getCartTotal, getCartCount, removeFromCart, updateQuantity, clearCart } = useCart();
@@ -44,18 +46,31 @@ export default function Account({ username, userType, onLogout }: Props) {
     setShowCheckout(true);
   };
 
-  const handleConfirmOrder = (paymentMethod: string, tip: number) => {
+  const handleConfirmOrder = async (paymentMethod: string, tip: number, deliveryInfo?: string) => {
     if (!selectedCartId) return;
 
     const cart = carts[selectedCartId];
     const subtotal = getCartTotal(selectedCartId);
     const totalWithTipAndFees = subtotal + 2.99 + 1.50 + tip;
 
-    // Save the order
-    addOrder(selectedCartId, cart.restaurantName, cart.items, totalWithTipAndFees);
+    // Save the order to Supabase
+    const order = await addOrder(
+      selectedCartId,
+      cart.restaurantName,
+      cart.items,
+      totalWithTipAndFees,
+      tip,
+      deliveryInfo
+    );
 
     setShowCheckout(false);
-    alert(`Order confirmed!\n\nPayment: ${paymentMethod}\nTip: $${tip.toFixed(2)}\nTotal: $${totalWithTipAndFees.toFixed(2)}\n\nYour food will be delivered soon!`);
+
+    if (order) {
+      alert(`Order confirmed!\n\nOrder Code: ${order.verificationCode}\nPIN: ${order.pin}\n\nPayment: ${paymentMethod}\nTip: $${tip.toFixed(2)}\nTotal: $${totalWithTipAndFees.toFixed(2)}\n\nYour food will be delivered soon!`);
+    } else {
+      alert(`Order confirmed!\n\nPayment: ${paymentMethod}\nTip: $${tip.toFixed(2)}\nTotal: $${totalWithTipAndFees.toFixed(2)}\n\nYour food will be delivered soon!`);
+    }
+
     clearCart(selectedCartId);
     setSelectedCartId(null);
   };
@@ -157,7 +172,7 @@ export default function Account({ username, userType, onLogout }: Props) {
 
       {!isWorker && totalCartCount > 0 && (
         <button className="floating-cart-btn" onClick={() => setShowCartSidebar(true)}>
-          🛒 {totalCartCount}
+          Cart ({totalCartCount})
         </button>
       )}
 
@@ -171,7 +186,7 @@ export default function Account({ username, userType, onLogout }: Props) {
               <label>Full Name</label>
               <input
                 type="text"
-                value="John Hopkins"
+                value={profile?.name || 'User'}
                 readOnly
                 className="form-input"
               />
@@ -180,16 +195,16 @@ export default function Account({ username, userType, onLogout }: Props) {
               <label>Email</label>
               <input
                 type="email"
-                value={`${username}@jhu.edu`}
+                value={profile?.email || ''}
                 readOnly
                 className="form-input"
               />
             </div>
             <div className="form-group">
-              <label>Phone Number</label>
+              <label>Account Type</label>
               <input
-                type="tel"
-                value="(410) 555-0123"
+                type="text"
+                value={profile?.role === 'worker' ? 'Delivery Worker' : 'Customer'}
                 readOnly
                 className="form-input"
               />
@@ -367,7 +382,7 @@ export default function Account({ username, userType, onLogout }: Props) {
                             <button onClick={() => updateQuantity(restaurantId, item.id, 1)}>+</button>
                           </div>
                           <button className="remove-btn" onClick={() => removeFromCart(restaurantId, item.id)}>
-                            🗑️
+                            Remove
                           </button>
                         </div>
                       ))}
