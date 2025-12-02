@@ -136,7 +136,7 @@ export default function WorkerDashboard(_props: Props) {
 
   return (
     <div className="worker-dashboard">
-      <Header userType="worker" activeTab="jobs" />
+      <Header activeTab="jobs" />
 
       <div className="content-wrapper">
         {/* Active Delivery Section */}

@@ -1,39 +1,27 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 import './Header.css';
 
 interface Props {
-  userType: 'customer' | 'worker';
+  username?: string; // Made optional to handle undefined cases
   activeTab: 'home' | 'jobs' | 'earnings' | 'orders' | 'account';
   showLogo?: boolean;
 }
 
-export default function Header({ userType, activeTab, showLogo = true }: Props) {
+export default function Header({ username = 'User', activeTab, showLogo = true }: Props) {
   const navigate = useNavigate();
-  const { profile, signOut } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [user, setUsername] = useState('');
 
-  const isWorker = userType === 'worker';
+  const userRole = localStorage.getItem('userRole');
+
   const logoText = 'DormDash';
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      navigate('/');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
+  const onLogout = () => {
+    setUsername('');
 
-  // Get initials from name
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(part => part.charAt(0))
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+    // Clear localStorage
+    localStorage.removeItem('loginState');
   };
 
   return (
@@ -48,7 +36,7 @@ export default function Header({ userType, activeTab, showLogo = true }: Props) 
 
       <div className="header-col header-center">
         <div className="nav-links">
-          {isWorker ? (
+          {userRole === "worker" ? (
             <>
               <button
                 className={`nav-link ${activeTab === 'jobs' ? 'active' : ''}`}
@@ -97,11 +85,11 @@ export default function Header({ userType, activeTab, showLogo = true }: Props) 
       <div className="header-col header-right">
         <div className="user-menu" onClick={() => setShowDropdown(!showDropdown)}>
           <div className="user-avatar-initials">
-            {profile?.name ? getInitials(profile.name) : '?'}
+            {username.charAt(0).toUpperCase()}
           </div>
-          <span className="user-name">{profile?.name?.split(' ')[0] || 'User'}</span>
+          <span className="user-name">{username}</span>
           <svg className="dropdown-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="m6 9 6 6 6-6"/>
+            <path d="m6 9 6 6 6-6" />
           </svg>
         </div>
 
@@ -111,8 +99,7 @@ export default function Header({ userType, activeTab, showLogo = true }: Props) 
             <div className="user-dropdown">
               <div className="dropdown-header">
                 <div className="dropdown-user-info">
-                  <span className="dropdown-name">{profile?.name || 'User'}</span>
-                  <span className="dropdown-email">{profile?.email || ''}</span>
+                  <span className="dropdown-name">{username}</span>
                 </div>
               </div>
               <div className="dropdown-divider" />
@@ -120,7 +107,7 @@ export default function Header({ userType, activeTab, showLogo = true }: Props) 
                 Account Settings
               </button>
               <div className="dropdown-divider" />
-              <button className="dropdown-item sign-out" onClick={handleSignOut}>
+              <button className="dropdown-item sign-out" onClick={onLogout}>
                 Sign Out
               </button>
             </div>

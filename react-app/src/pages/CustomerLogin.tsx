@@ -36,10 +36,10 @@ export default function CustomerLogin() {
       return;
     }
 
+    localStorage.setItem('userRole', 'customer');
+
     // All conditions met - redirect!
-    const destination = profile.role === 'worker' ? '/worker-dashboard' : '/browse';
-    console.log('[CustomerLogin] All conditions met! Redirecting to:', destination);
-    navigate(destination, { replace: true });
+    navigate('/browse', { replace: true });
   }, [user, profile, loading, navigate]);
 
   const handleGoogleSignIn = async () => {

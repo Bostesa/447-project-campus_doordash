@@ -185,7 +185,7 @@ export default function WorkerOrders(_props: Props) {
 
   return (
     <div className="orders-page worker">
-      <Header userType="worker" activeTab="earnings" />
+      <Header activeTab="earnings" />
 
       <div className="content-wrapper">
         <h2 className="section-title">Your Earnings</h2>

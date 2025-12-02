@@ -12,11 +12,8 @@ export default function WorkerLogin() {
   // Redirect if already logged in
   useEffect(() => {
     if (!loading && user && profile) {
-      if (profile.role === 'worker') {
-        navigate('/worker-dashboard');
-      } else {
-        navigate('/browse');
-      }
+      localStorage.setItem('userRole', 'worker');
+      navigate('/worker-dashboard');
     }
   }, [user, profile, loading, navigate]);
 

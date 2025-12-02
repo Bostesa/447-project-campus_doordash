@@ -203,7 +203,7 @@ export default function RestaurantMenu(_props: Props) {
 
   return (
     <div className="restaurant-menu">
-      <Header userType="customer" activeTab="home" />
+      <Header activeTab="home" />
 
       <div className="menu-page-content">
         {/* Menu Header */}

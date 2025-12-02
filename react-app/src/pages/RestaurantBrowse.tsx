@@ -6,6 +6,7 @@ import OrderQRCode from '../components/OrderQRCode';
 import OrderStatusTracker from '../components/OrderStatusTracker';
 import { useCart } from '../contexts/CartContext';
 import { useOrders } from '../contexts/OrderContext';
+import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import './RestaurantBrowse.css';
 
@@ -22,11 +23,6 @@ interface OperatingHours {
   opens_at: string | null;
   closes_at: string | null;
   is_closed: boolean;
-}
-
-interface Props {
-  username: string;
-  onLogout: () => void;
 }
 
 // Helper to format time from "HH:MM:SS" to "X AM/PM"
@@ -103,8 +99,9 @@ function getDeliveryTime(location: string): string {
   return times[location] || '15-25 min';
 }
 
-export default function RestaurantBrowse(_props: Props) {
+export default function RestaurantBrowse() {
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const { carts, getCartTotal, getCartCount, removeFromCart, updateQuantity, clearCart } = useCart();
   const { orders, addOrder } = useOrders();
   const [showCartSidebar, setShowCartSidebar] = useState(false);
@@ -234,7 +231,7 @@ export default function RestaurantBrowse(_props: Props) {
 
   return (
     <div className="restaurant-browse">
-      <Header userType="customer" activeTab="home" />
+      <Header username={user?.email || 'Guest'} activeTab='home'/>
 
       <div className="content-wrapper">
         {/* Current Orders Section */}
