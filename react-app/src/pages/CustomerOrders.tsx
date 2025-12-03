@@ -28,7 +28,7 @@ export default function CustomerOrders(_props: Props) {
   const navigate = useNavigate();
   const { carts, addToCart, getCartTotal, getCartCount, removeFromCart, updateQuantity, clearCart } = useCart();
   const { orders: savedOrders, addOrder } = useOrders();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const [showCartSidebar, setShowCartSidebar] = useState(false);
   const [selectedCartId, setSelectedCartId] = useState<string | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);

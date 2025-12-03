@@ -228,12 +228,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (!isMounted) return;
 
             setProfile(userProfile);
-            setRole(userProfile?.role ?? null);
-            console.log('[AuthContext] Profile set for user:', userProfile?.role);
+            console.log('[AuthContext] Profile set for user:', userProfile?.name);
           } else {
             console.log('[AuthContext] User signed out, clearing profile');
             setProfile(null);
-            setRole(null);
           }
         }
 
@@ -288,7 +286,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (updatedProfile) {
         setProfile(updatedProfile as Profile);
-        setRole(updatedProfile.role as UserRole);
       }
     } catch (err) {
       console.error('[refreshProfile] Exception:', err);
@@ -306,7 +303,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setSession(null);
     setProfile(null);
-    setRole(null);
 
     // Clear all localStorage items BEFORE calling Supabase signOut
     // This ensures no session restoration can happen
