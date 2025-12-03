@@ -18,7 +18,7 @@ import Account from './pages/Account';
 // Protected Route - any authenticated UMBC user can access any page
 // No role restrictions - everyone can be both customer and worker
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, profile, loading } = useAuth();
+  const { profile, loading } = useAuth();
 
   if (loading) {
     return (
@@ -28,7 +28,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user || !profile) {
+  if (!profile) {
     return <Navigate to="/" replace />;
   }
 
