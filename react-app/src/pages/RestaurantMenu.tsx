@@ -43,9 +43,82 @@ interface MenuItem {
   isGlutenFree?: boolean;
 }
 
-// Get a food icon based on the category or item name (returns empty string - no emojis)
-function getFoodIcon(_categoryName: string, _itemName: string): string {
-  return '';
+// Get a food icon based on the category or item name
+function getFoodIcon(categoryName: string, itemName: string): string {
+  const name = itemName.toLowerCase();
+  const category = categoryName.toLowerCase();
+
+  // Specific items
+  if (name.includes('burger') || name.includes('cheeseburger')) return '🍔';
+  if (name.includes('pizza')) return '🍕';
+  if (name.includes('sandwich')) return '🥪';
+  if (name.includes('salad')) return '🥗';
+  if (name.includes('pasta') || name.includes('alfredo') || name.includes('spaghetti')) return '🍝';
+  if (name.includes('chicken') || name.includes('wings') || name.includes('tenders')) return '🍗';
+  if (name.includes('nugget')) return '🍖';
+  if (name.includes('fries') || name.includes('fry')) return '🍟';
+  if (name.includes('taco')) return '🌮';
+  if (name.includes('burrito') || name.includes('wrap')) return '🌯';
+  if (name.includes('sushi') || name.includes('roll')) return '🍣';
+  if (name.includes('rice') || name.includes('bowl')) return '🍚';
+  if (name.includes('soup')) return '🍲';
+  if (name.includes('steak') || name.includes('beef')) return '🥩';
+  if (name.includes('fish') || name.includes('salmon') || name.includes('tuna')) return '🐟';
+  if (name.includes('shrimp') || name.includes('seafood')) return '🦐';
+  if (name.includes('egg')) return '🥚';
+  if (name.includes('bacon')) return '🥓';
+  if (name.includes('bagel')) return '🥯';
+  if (name.includes('bread') || name.includes('toast')) return '🍞';
+  if (name.includes('pancake') || name.includes('waffle')) return '🧇';
+  if (name.includes('donut') || name.includes('doughnut')) return '🍩';
+  if (name.includes('cookie')) return '🍪';
+  if (name.includes('cake') || name.includes('brownie')) return '🍰';
+  if (name.includes('muffin')) return '🧁';
+  if (name.includes('ice cream') || name.includes('sundae')) return '🍨';
+  if (name.includes('milkshake') || name.includes('shake')) return '🥛';
+  if (name.includes('coffee') || name.includes('latte') || name.includes('espresso') || name.includes('macchiato') || name.includes('cappuccino')) return '☕';
+  if (name.includes('tea')) return '🍵';
+  if (name.includes('smoothie') || name.includes('juice')) return '🧃';
+  if (name.includes('soda') || name.includes('cola') || name.includes('sprite') || name.includes('drink')) return '🥤';
+  if (name.includes('lemonade')) return '🍋';
+  if (name.includes('water')) return '💧';
+  if (name.includes('beer')) return '🍺';
+  if (name.includes('wine')) return '🍷';
+  if (name.includes('falafel') || name.includes('hummus')) return '🧆';
+  if (name.includes('hot dog')) return '🌭';
+  if (name.includes('pretzel')) return '🥨';
+  if (name.includes('popcorn')) return '🍿';
+  if (name.includes('nachos') || name.includes('chips')) return '🌽';
+  if (name.includes('hash brown') || name.includes('potato')) return '🥔';
+  if (name.includes('fruit') || name.includes('apple')) return '🍎';
+  if (name.includes('banana')) return '🍌';
+  if (name.includes('orange')) return '🍊';
+  if (name.includes('strawberry') || name.includes('berry')) return '🍓';
+  if (name.includes('pumpkin')) return '🎃';
+
+  // Category fallbacks
+  if (category.includes('burger')) return '🍔';
+  if (category.includes('pizza')) return '🍕';
+  if (category.includes('sandwich')) return '🥪';
+  if (category.includes('salad')) return '🥗';
+  if (category.includes('pasta') || category.includes('italian')) return '🍝';
+  if (category.includes('chicken') || category.includes('poultry')) return '🍗';
+  if (category.includes('seafood') || category.includes('fish')) return '🐟';
+  if (category.includes('mexican') || category.includes('taco')) return '🌮';
+  if (category.includes('asian') || category.includes('chinese') || category.includes('japanese')) return '🍜';
+  if (category.includes('breakfast')) return '🍳';
+  if (category.includes('dessert') || category.includes('sweet')) return '🍰';
+  if (category.includes('bakery') || category.includes('bread')) return '🥐';
+  if (category.includes('beverage') || category.includes('drink')) return '🥤';
+  if (category.includes('coffee')) return '☕';
+  if (category.includes('appetizer') || category.includes('starter')) return '🍽️';
+  if (category.includes('side')) return '🍟';
+  if (category.includes('entree') || category.includes('main')) return '🍽️';
+  if (category.includes('soup')) return '🍲';
+  if (category.includes('grill')) return '🔥';
+
+  // Default
+  return '🍽️';
 }
 
 export default function RestaurantMenu() {
