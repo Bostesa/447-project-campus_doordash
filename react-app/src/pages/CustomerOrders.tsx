@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { useOrders } from '../contexts/OrderContext';
+import { useAuth } from '../contexts/AuthContext';
 import Header from '../components/Header';
 import CheckoutModal from '../components/CheckoutModal';
 import OrderQRCode from '../components/OrderQRCode';
@@ -27,6 +28,7 @@ export default function CustomerOrders(_props: Props) {
   const navigate = useNavigate();
   const { carts, addToCart, getCartTotal, getCartCount, removeFromCart, updateQuantity, clearCart } = useCart();
   const { orders: savedOrders, addOrder } = useOrders();
+  const { user, signOut } = useAuth();
   const [showCartSidebar, setShowCartSidebar] = useState(false);
   const [selectedCartId, setSelectedCartId] = useState<string | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
@@ -211,7 +213,7 @@ export default function CustomerOrders(_props: Props) {
 
   return (
     <div className="orders-page customer">
-      <Header userType="customer" activeTab="orders" />
+      <Header username={user?.email || 'Guest'} onLogout={signOut} activeTab='orders'/>
 
       {totalCartCount > 0 && (
         <button className="floating-cart-btn" onClick={() => setShowCartSidebar(true)}>

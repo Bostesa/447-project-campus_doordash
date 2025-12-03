@@ -41,16 +41,12 @@ interface MenuItem {
   isGlutenFree?: boolean;
 }
 
-interface Props {
-  username: string;
-}
-
 // Get a food icon based on the category or item name (returns empty string - no emojis)
 function getFoodIcon(_categoryName: string, _itemName: string): string {
   return '';
 }
 
-export default function RestaurantMenu(_props: Props) {
+export default function RestaurantMenu() {
   const navigate = useNavigate();
   const { restaurantId } = useParams<{ restaurantId: string }>();
   const { carts, addToCart: addToCartContext, removeFromCart: removeFromCartContext, updateQuantity: updateQuantityContext, clearCart, getCartTotal, getCartCount } = useCart();
@@ -203,7 +199,7 @@ export default function RestaurantMenu(_props: Props) {
 
   return (
     <div className="restaurant-menu">
-      <Header userType="customer" activeTab="home" />
+      <Header activeTab="home" />
 
       <div className="menu-page-content">
         {/* Menu Header */}

@@ -4,21 +4,27 @@ import { useAuth } from '../contexts/AuthContext';
 import './Header.css';
 
 interface Props {
-  userType: 'customer' | 'worker';
+  username?: string;
   activeTab: 'home' | 'jobs' | 'earnings' | 'orders' | 'account';
   showLogo?: boolean;
+  onLogout?: () => void;
 }
 
-export default function Header({ userType, activeTab, showLogo = true }: Props) {
+export default function Header({ username, activeTab, showLogo = true, onLogout }: Props) {
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const isWorker = userType === 'worker';
+  // Determine if user is in worker mode based on current route
+  const isWorker = window.location.pathname.startsWith('/worker');
+  const displayName = username || profile?.name || 'User';
   const logoText = 'DormDash';
 
   const handleSignOut = async () => {
     try {
+      if (onLogout) {
+        onLogout();
+      }
       await signOut();
       navigate('/');
     } catch (error) {
@@ -64,7 +70,7 @@ export default function Header({ userType, activeTab, showLogo = true }: Props) 
               </button>
               <button
                 className={`nav-link ${activeTab === 'account' ? 'active' : ''}`}
-                onClick={() => navigate('/worker-account')}
+                onClick={() => navigate('/account')}
               >
                 Account
               </button>
@@ -97,11 +103,11 @@ export default function Header({ userType, activeTab, showLogo = true }: Props) 
       <div className="header-col header-right">
         <div className="user-menu" onClick={() => setShowDropdown(!showDropdown)}>
           <div className="user-avatar-initials">
-            {profile?.name ? getInitials(profile.name) : '?'}
+            {getInitials(displayName)}
           </div>
-          <span className="user-name">{profile?.name?.split(' ')[0] || 'User'}</span>
+          <span className="user-name">{displayName.split(' ')[0]}</span>
           <svg className="dropdown-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="m6 9 6 6 6-6"/>
+            <path d="m6 9 6 6 6-6" />
           </svg>
         </div>
 
@@ -111,12 +117,12 @@ export default function Header({ userType, activeTab, showLogo = true }: Props) 
             <div className="user-dropdown">
               <div className="dropdown-header">
                 <div className="dropdown-user-info">
-                  <span className="dropdown-name">{profile?.name || 'User'}</span>
+                  <span className="dropdown-name">{displayName}</span>
                   <span className="dropdown-email">{profile?.email || ''}</span>
                 </div>
               </div>
               <div className="dropdown-divider" />
-              <button className="dropdown-item" onClick={() => { navigate(isWorker ? '/worker-account' : '/account'); setShowDropdown(false); }}>
+              <button className="dropdown-item" onClick={() => { navigate('/account'); setShowDropdown(false); }}>
                 Account Settings
               </button>
               <div className="dropdown-divider" />

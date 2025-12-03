@@ -17,7 +17,7 @@ import Account from './pages/Account';
 
 // Protected Route - any authenticated UMBC user can access any page
 // No role restrictions - everyone can be both customer and worker
-function ProtectedRoute({ children, redirectTo = '/' }: { children: React.ReactNode; redirectTo?: string }) {
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, profile, loading } = useAuth();
 
   if (loading) {
@@ -29,14 +29,14 @@ function ProtectedRoute({ children, redirectTo = '/' }: { children: React.ReactN
   }
 
   if (!user || !profile) {
-    return <Navigate to={redirectTo} replace />;
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;
 }
 
 function AppRoutes() {
-  const { profile, signOut } = useAuth();
+  const { profile } = useAuth();
 
   return (
     <Routes>
@@ -48,23 +48,23 @@ function AppRoutes() {
       <Route
         path="/browse"
         element={
-          <ProtectedRoute redirectTo="/customer-login">
-            <RestaurantBrowse username={profile?.name || ''} onLogout={signOut} />
+          <ProtectedRoute>
+            <RestaurantBrowse />
           </ProtectedRoute>
         }
       />
       <Route
         path="/restaurant/:restaurantId"
         element={
-          <ProtectedRoute redirectTo="/customer-login">
-            <RestaurantMenu username={profile?.name || ''} />
+          <ProtectedRoute>
+            <RestaurantMenu />
           </ProtectedRoute>
         }
       />
       <Route
         path="/customer-orders"
         element={
-          <ProtectedRoute redirectTo="/customer-login">
+          <ProtectedRoute>
             <CustomerOrders username={profile?.name || ''} />
           </ProtectedRoute>
         }
@@ -74,7 +74,7 @@ function AppRoutes() {
       <Route
         path="/worker-dashboard"
         element={
-          <ProtectedRoute redirectTo="/worker-login">
+          <ProtectedRoute>
             <WorkerDashboard username={profile?.name || ''} />
           </ProtectedRoute>
         }
@@ -82,7 +82,7 @@ function AppRoutes() {
       <Route
         path="/worker-orders"
         element={
-          <ProtectedRoute redirectTo="/worker-login">
+          <ProtectedRoute>
             <WorkerOrders username={profile?.name || ''} />
           </ProtectedRoute>
         }
@@ -93,23 +93,7 @@ function AppRoutes() {
         path="/account"
         element={
           <ProtectedRoute>
-            <Account
-              username={profile?.name || ''}
-              userType="customer"
-              onLogout={signOut}
-            />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/worker-account"
-        element={
-          <ProtectedRoute>
-            <Account
-              username={profile?.name || ''}
-              userType="worker"
-              onLogout={signOut}
-            />
+            <Account username={profile?.name || ''} />
           </ProtectedRoute>
         }
       />

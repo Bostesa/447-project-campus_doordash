@@ -1,9 +1,6 @@
-export type UserType = 'customer' | 'worker' | null;
-
 export interface User {
   username: string;
   email: string;
-  type: UserType;
 }
 
 export interface Order {
