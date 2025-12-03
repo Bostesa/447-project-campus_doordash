@@ -260,6 +260,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Clear all localStorage remnants
     localStorage.removeItem('loginState');
     localStorage.removeItem('customerAccounts');
+    localStorage.removeItem('deliveryLocation');
 
     // Clear user-specific data
     if (userId) {

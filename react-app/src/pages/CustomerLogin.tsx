@@ -9,37 +9,13 @@ export default function CustomerLogin() {
   const [error, setError] = useState('');
   const [isSigningIn, setIsSigningIn] = useState(false);
 
-  // Redirect if already logged in
+  // Redirect if already logged in - always go to /browse (customer mode)
   useEffect(() => {
-    console.log('[CustomerLogin] useEffect triggered');
-    console.log('[CustomerLogin] State:', {
-      loading,
-      hasUser: !!user,
-      userEmail: user?.email,
-      hasProfile: !!profile,
-      profileRole: profile?.role,
-      profileName: profile?.name
-    });
+    if (loading) return;
+    if (!user || !profile) return;
 
-    if (loading) {
-      console.log('[CustomerLogin] Still loading, waiting...');
-      return;
-    }
-
-    if (!user) {
-      console.log('[CustomerLogin] No user, staying on login page');
-      return;
-    }
-
-    if (!profile) {
-      console.log('[CustomerLogin] User exists but no profile yet, waiting...');
-      return;
-    }
-
-    // All conditions met - redirect!
-    const destination = profile.role === 'worker' ? '/worker-dashboard' : '/browse';
-    console.log('[CustomerLogin] All conditions met! Redirecting to:', destination);
-    navigate(destination, { replace: true });
+    // Always redirect to browse - any UMBC user can order food
+    navigate('/browse', { replace: true });
   }, [user, profile, loading, navigate]);
 
   const handleGoogleSignIn = async () => {

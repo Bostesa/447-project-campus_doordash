@@ -14,6 +14,72 @@
   font-weight: 700;
   color: #000000;
   margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.refresh-btn {
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #007AFF;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.refresh-btn:disabled {
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.no-active-delivery {
+  background: #f3f4f6;
+  border-radius: 0.75rem;
+  padding: 2rem;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.no-active-delivery p {
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+.loading-jobs,
+.no-jobs {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 3rem;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.loading-jobs p,
+.no-jobs p {
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #007AFF;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* Active Delivery Grid */
@@ -196,7 +262,7 @@
   margin-bottom: 1rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   display: grid;
-  grid-template-columns: 70px 1fr auto auto;
+  grid-template-columns: 1fr auto auto;
   align-items: center;
   gap: 1rem;
 }
@@ -235,6 +301,20 @@
   font-size: 0.875rem;
 }
 
+.job-time {
+  color: #9ca3af;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.job-pay {
+  color: #10b981;
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: right;
+  min-width: 80px;
+}
+
 .job-price {
   color: #007AFF;
   font-size: 1.25rem;
@@ -253,8 +333,13 @@
   transition: all 0.2s;
 }
 
-.accept-btn:hover {
+.accept-btn:hover:not(:disabled) {
   background-color: #0066CC;
+}
+
+.accept-btn:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
 }
 
 @media (max-width: 768px) {

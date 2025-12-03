@@ -9,15 +9,13 @@ export default function WorkerLogin() {
   const [error, setError] = useState('');
   const [isSigningIn, setIsSigningIn] = useState(false);
 
-  // Redirect if already logged in
+  // Redirect if already logged in - always go to /worker-dashboard (dasher mode)
   useEffect(() => {
-    if (!loading && user && profile) {
-      if (profile.role === 'worker') {
-        navigate('/worker-dashboard');
-      } else {
-        navigate('/browse');
-      }
-    }
+    if (loading) return;
+    if (!user || !profile) return;
+
+    // Always redirect to worker dashboard - any UMBC user can be a dasher
+    navigate('/worker-dashboard', { replace: true });
   }, [user, profile, loading, navigate]);
 
   const handleGoogleSignIn = async () => {

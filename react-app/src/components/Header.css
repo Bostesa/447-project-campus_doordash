@@ -220,6 +220,15 @@
   background-color: #fef2f2;
 }
 
+.dropdown-item.mode-switch {
+  color: #007AFF;
+  font-weight: 500;
+}
+
+.dropdown-item.mode-switch:hover {
+  background-color: #eff6ff;
+}
+
 .dropdown-icon {
   font-size: 1rem;
   width: 1.5rem;

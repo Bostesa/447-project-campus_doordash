@@ -270,6 +270,22 @@ st.markdown("""
         color: #6b7280;
         text-decoration: underline;
     }
+
+    /* Navigation buttons in header */
+    [data-testid="column"] button[kind="secondary"] {
+        background-color: transparent !important;
+        border: none !important;
+        color: #000000 !important;
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
+        padding: 0.5rem !important;
+        box-shadow: none !important;
+    }
+
+    [data-testid="column"] button[kind="secondary"]:hover {
+        color: #f2b90d !important;
+        background-color: transparent !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -441,30 +457,35 @@ if not st.session_state.logged_in:
     st.markdown('<p class="landing-tagline">Your campus cravings, delivered.</p>', unsafe_allow_html=True)
 else:
     # Header
-    st.markdown("""
-    <div class="campus-header">
-        <div class="logo-section">
-            <span class="logo-icon">🎓</span>
-            <span class="logo-text">Campus Eats</span>
-        </div>
-        <div class="nav-section">
-            <div class="nav-links">
-                <a href="#">Home</a>
-                <a href="#">Orders</a>
-                <a href="#">Account</a>
-            </div>
-            <div class="nav-right">
-                <svg class="search-icon-header" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <path d="m21 21-4.35-4.35"></path>
-                </svg>
-                <div class="user-avatar">
-                    <img src="" style="width: 100%; height: 100%; object-fit: cover;">
-                </div>
+    header_col1, header_col2, header_col3 = st.columns([1, 2, 1])
+
+    with header_col1:
+        st.markdown("""
+        <div class="campus-header" style="justify-content: flex-start;">
+            <div class="logo-section">
+                <span class="logo-icon">🎓</span>
+                <span class="logo-text">Campus Eats</span>
             </div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
+
+    with header_col2:
+        nav_cols = st.columns(3)
+        with nav_cols[0]:
+            st.markdown('<p class="nav-link" style="text-align: center; margin-top: 0.75rem; color: #f2b90d;">Home</p>', unsafe_allow_html=True)
+        with nav_cols[1]:
+            if st.button("Orders", key="nav_orders_customer", use_container_width=True, type="secondary"):
+                st.switch_page("pages/customer_orders.py")
+        with nav_cols[2]:
+            if st.button("Account", key="nav_account_customer", use_container_width=True, type="secondary"):
+                st.switch_page("pages/account.py")
+
+    with header_col3:
+        st.markdown("""
+        <div style="display: flex; justify-content: flex-end; padding: 1rem;">
+            <div class="user-avatar"></div>
+        </div>
+        """, unsafe_allow_html=True)
 
     # Content wrapper
     st.markdown('<div class="content-wrapper">', unsafe_allow_html=True)

@@ -15,8 +15,9 @@ import WorkerOrders from './pages/WorkerOrders';
 import CustomerOrders from './pages/CustomerOrders';
 import Account from './pages/Account';
 
-// Protected Route for Customers
-function CustomerRoute({ children }: { children: React.ReactNode }) {
+// Protected Route - any authenticated UMBC user can access any page
+// No role restrictions - everyone can be both customer and worker
+function ProtectedRoute({ children, redirectTo = '/' }: { children: React.ReactNode; redirectTo?: string }) {
   const { user, profile, loading } = useAuth();
 
   if (loading) {
@@ -28,53 +29,7 @@ function CustomerRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!user || !profile) {
-    return <Navigate to="/customer-login" replace />;
-  }
-
-  if (profile.role === 'worker') {
-    return <Navigate to="/worker-dashboard" replace />;
-  }
-
-  return <>{children}</>;
-}
-
-// Protected Route for Workers
-function WorkerRoute({ children }: { children: React.ReactNode }) {
-  const { user, profile, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <div>Loading...</div>
-      </div>
-    );
-  }
-
-  if (!user || !profile) {
-    return <Navigate to="/worker-login" replace />;
-  }
-
-  if (profile.role === 'customer') {
-    return <Navigate to="/browse" replace />;
-  }
-
-  return <>{children}</>;
-}
-
-// Protected Route for any authenticated user
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, profile, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <div>Loading...</div>
-      </div>
-    );
-  }
-
-  if (!user || !profile) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={redirectTo} replace />;
   }
 
   return <>{children}</>;
@@ -89,58 +44,70 @@ function AppRoutes() {
       <Route path="/customer-login" element={<CustomerLogin />} />
       <Route path="/worker-login" element={<WorkerLogin />} />
 
-      {/* Customer Routes */}
+      {/* Customer Routes - any authenticated user can access */}
       <Route
         path="/browse"
         element={
-          <CustomerRoute>
+          <ProtectedRoute redirectTo="/customer-login">
             <RestaurantBrowse username={profile?.name || ''} onLogout={signOut} />
-          </CustomerRoute>
+          </ProtectedRoute>
         }
       />
       <Route
         path="/restaurant/:restaurantId"
         element={
-          <CustomerRoute>
+          <ProtectedRoute redirectTo="/customer-login">
             <RestaurantMenu username={profile?.name || ''} />
-          </CustomerRoute>
+          </ProtectedRoute>
         }
       />
       <Route
         path="/customer-orders"
         element={
-          <CustomerRoute>
+          <ProtectedRoute redirectTo="/customer-login">
             <CustomerOrders username={profile?.name || ''} />
-          </CustomerRoute>
+          </ProtectedRoute>
         }
       />
 
-      {/* Worker Routes */}
+      {/* Worker Routes - any authenticated user can access */}
       <Route
         path="/worker-dashboard"
         element={
-          <WorkerRoute>
+          <ProtectedRoute redirectTo="/worker-login">
             <WorkerDashboard username={profile?.name || ''} />
-          </WorkerRoute>
+          </ProtectedRoute>
         }
       />
       <Route
         path="/worker-orders"
         element={
-          <WorkerRoute>
+          <ProtectedRoute redirectTo="/worker-login">
             <WorkerOrders username={profile?.name || ''} />
-          </WorkerRoute>
+          </ProtectedRoute>
         }
       />
 
-      {/* Shared Routes */}
+      {/* Account - works for both modes */}
       <Route
         path="/account"
         element={
           <ProtectedRoute>
             <Account
               username={profile?.name || ''}
-              userType={profile?.role || null}
+              userType="customer"
+              onLogout={signOut}
+            />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/worker-account"
+        element={
+          <ProtectedRoute>
+            <Account
+              username={profile?.name || ''}
+              userType="worker"
               onLogout={signOut}
             />
           </ProtectedRoute>

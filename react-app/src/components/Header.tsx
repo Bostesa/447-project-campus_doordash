@@ -64,7 +64,7 @@ export default function Header({ userType, activeTab, showLogo = true }: Props) 
               </button>
               <button
                 className={`nav-link ${activeTab === 'account' ? 'active' : ''}`}
-                onClick={() => navigate('/account')}
+                onClick={() => navigate('/worker-account')}
               >
                 Account
               </button>
@@ -116,9 +116,19 @@ export default function Header({ userType, activeTab, showLogo = true }: Props) 
                 </div>
               </div>
               <div className="dropdown-divider" />
-              <button className="dropdown-item" onClick={() => { navigate('/account'); setShowDropdown(false); }}>
+              <button className="dropdown-item" onClick={() => { navigate(isWorker ? '/worker-account' : '/account'); setShowDropdown(false); }}>
                 Account Settings
               </button>
+              <div className="dropdown-divider" />
+              {isWorker ? (
+                <button className="dropdown-item mode-switch" onClick={() => { navigate('/browse'); setShowDropdown(false); }}>
+                  Switch to Customer
+                </button>
+              ) : (
+                <button className="dropdown-item mode-switch" onClick={() => { navigate('/worker-dashboard'); setShowDropdown(false); }}>
+                  Switch to Dasher
+                </button>
+              )}
               <div className="dropdown-divider" />
               <button className="dropdown-item sign-out" onClick={handleSignOut}>
                 Sign Out

@@ -108,10 +108,9 @@ export function OrderProvider({ children }: { children: ReactNode }) {
   }, [orders, user?.id]);
 
   // Real-time subscription for customer order updates
+  // All users can be customers, so set up for everyone
   useEffect(() => {
-    // Wait for profile to be loaded before setting up subscription
     if (!user?.id || !profile) return;
-    if (profile.role === 'worker') return;
 
     console.log('[OrderContext] Setting up real-time subscription for customer orders');
 
@@ -158,15 +157,14 @@ export function OrderProvider({ children }: { children: ReactNode }) {
   }, [user?.id, profile, getStatusMessage]);
 
   // Real-time subscription for worker new orders
+  // All users can be workers, so set up for everyone
   useEffect(() => {
-    // Wait for profile to be loaded before setting up subscription
     if (!user?.id || !profile) return;
-    if (profile.role !== 'worker') return;
 
     console.log('[OrderContext] Setting up real-time subscription for new orders (worker)');
 
     const channel = supabase
-      .channel('new-pending-orders')
+      .channel(`new-pending-orders-${user.id}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',

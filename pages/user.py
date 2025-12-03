@@ -133,7 +133,7 @@ with st.form("login_form", clear_on_submit=False):
     if submit:
         if email == "login" and password == "login":
             st.session_state.logged_in = True
-            st.session_state.user_type = "user"
+            st.session_state.user_type = "customer"
             st.session_state.username = email
             st.success("Login successful!")
             st.switch_page("app.py")

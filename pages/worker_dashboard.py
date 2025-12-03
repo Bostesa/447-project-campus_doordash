@@ -91,6 +91,22 @@ st.markdown("""
         color: #007AFF;
     }
 
+    /* Navigation buttons in header */
+    [data-testid="column"] button[kind="secondary"] {
+        background-color: transparent !important;
+        border: none !important;
+        color: #000000 !important;
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
+        padding: 0.5rem !important;
+        box-shadow: none !important;
+    }
+
+    [data-testid="column"] button[kind="secondary"]:hover {
+        color: #007AFF !important;
+        background-color: transparent !important;
+    }
+
     .user-avatar {
         width: 40px;
         height: 40px;
@@ -296,20 +312,35 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Header
-st.markdown("""
-<div class="worker-header">
-    <div class="header-logo">
-        <div class="logo-icon">🚗</div>
-        <div class="logo-text">DormDash</div>
+header_col1, header_col2, header_col3 = st.columns([1, 2, 1])
+
+with header_col1:
+    st.markdown("""
+    <div class="worker-header" style="justify-content: flex-start;">
+        <div class="header-logo">
+            <div class="logo-icon">🚗</div>
+            <div class="logo-text">DormDash</div>
+        </div>
     </div>
-    <div class="header-nav">
-        <a href="#" class="nav-link active">Jobs</a>
-        <a href="#" class="nav-link">Earnings</a>
-        <a href="#" class="nav-link">Account</a>
+    """, unsafe_allow_html=True)
+
+with header_col2:
+    nav_cols = st.columns(3)
+    with nav_cols[0]:
+        st.markdown('<p class="nav-link active" style="text-align: center; margin-top: 0.75rem;">Jobs</p>', unsafe_allow_html=True)
+    with nav_cols[1]:
+        if st.button("Earnings", key="nav_earnings", use_container_width=True, type="secondary"):
+            st.switch_page("pages/worker_orders.py")
+    with nav_cols[2]:
+        if st.button("Account", key="nav_account", use_container_width=True, type="secondary"):
+            st.switch_page("pages/account.py")
+
+with header_col3:
+    st.markdown("""
+    <div style="display: flex; justify-content: flex-end; padding: 1rem;">
         <div class="user-avatar"></div>
     </div>
-</div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
 # Content
 st.markdown('<div class="content-wrapper">', unsafe_allow_html=True)
