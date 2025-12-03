@@ -2,13 +2,10 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
 
-export type UserRole = 'customer' | 'worker' | null;
-
 interface Profile {
   id: string;
   name: string;
   email: string | null;
-  role: UserRole;
   avatar_url: string | null;
   created_at: string;
 }
@@ -17,7 +14,6 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
-  role: UserRole;
   loading: boolean;
   signInWithGoogle: (redirectPath?: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -29,7 +25,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [role, setRole] = useState<UserRole>(null);
   const [loading, setLoading] = useState(true);
 
   // Fetch or create profile for user with timeout
@@ -74,7 +69,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             id: authUser.id,
             email: authUser.email,
             name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
-            role: 'customer' as UserRole, // Default role
             avatar_url: authUser.user_metadata?.avatar_url || null,
             created_at: new Date().toISOString(),
           };
@@ -154,8 +148,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (!isMounted) return;
 
           setProfile(userProfile);
-          setRole(userProfile?.role ?? null);
-          console.log('[AuthContext] Profile and role set:', { role: userProfile?.role });
         } else {
           console.log('[AuthContext] No session found');
         }
@@ -203,12 +195,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (!isMounted) return;
 
           setProfile(userProfile);
-          setRole(userProfile?.role ?? null);
-          console.log('[AuthContext] Updated state with profile, role:', userProfile?.role);
         } else {
           console.log('[AuthContext] No user in session, clearing profile');
           setProfile(null);
-          setRole(null);
         }
 
         authInitialized = true;
@@ -260,7 +249,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Clear all localStorage remnants
     localStorage.removeItem('loginState');
     localStorage.removeItem('customerAccounts');
-    localStorage.removeItem('deliveryLocation');
 
     // Clear user-specific data
     if (userId) {
@@ -281,14 +269,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setSession(null);
     setProfile(null);
-    setRole(null);
   };
 
   const value = {
     user,
     session,
     profile,
-    role,
     loading,
     signInWithGoogle,
     signOut,
