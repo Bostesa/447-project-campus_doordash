@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import Header from '../components/Header';
 import CheckoutModal from '../components/CheckoutModal';
 import { useCart } from '../contexts/CartContext';
@@ -14,7 +15,7 @@ interface Props {
 }
 
 export default function Account({ username }: Props) {
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const { carts, getCartTotal, removeFromCart, updateQuantity, clearCart } = useCart();
   const { addOrder } = useOrders();
@@ -26,6 +27,7 @@ export default function Account({ username }: Props) {
   const [roomNumber, setRoomNumber] = useState<string>('');
   const [instructions, setInstructions] = useState<string>('');
   const [saveMsg, setSaveMsg] = useState<string>('');
+  const [mealPlanMsg, setMealPlanMsg] = useState<string>('');
 
   const handlePlaceOrder = (restaurantId: string) => {
     setSelectedCartId(restaurantId);
@@ -33,7 +35,7 @@ export default function Account({ username }: Props) {
     setShowCheckout(true);
   };
 
-  const handleConfirmOrder = async (paymentMethod: string, tip: number, deliveryInfo?: string) => {
+  const handleConfirmOrder = async (_paymentMethod: string, tip: number, deliveryInfo?: string) => {
     if (!selectedCartId) return;
 
     const cart = carts[selectedCartId];
@@ -52,9 +54,9 @@ export default function Account({ username }: Props) {
     setShowCheckout(false);
 
     if (order) {
-      alert(`Order confirmed!\n\nOrder Code: ${order.verificationCode}\nPIN: ${order.pin}\n\nPayment: ${paymentMethod}\nTip: $${tip.toFixed(2)}\nTotal: $${totalWithTipAndFees.toFixed(2)}\n\nYour food will be delivered soon!`);
+      toast.success(`Order placed! Your PIN is ${order.pin}. Check your orders for details.`, { duration: 5000 });
     } else {
-      alert(`Order confirmed!\n\nPayment: ${paymentMethod}\nTip: $${tip.toFixed(2)}\nTotal: $${totalWithTipAndFees.toFixed(2)}\n\nYour food will be delivered soon!`);
+      toast.success('Order placed! Check your orders for details.', { duration: 5000 });
     }
 
     clearCart(selectedCartId);
@@ -101,6 +103,95 @@ export default function Account({ username }: Props) {
       console.error('Error saving delivery location', e);
       setSaveMsg('Failed to save delivery location. See console for details.');
     }
+  }
+
+  // Test functions for adding swipes and flex (for development/testing)
+  async function handleEnableMealPlan() {
+    if (!profile) return;
+    setMealPlanMsg('');
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        has_meal_plan: true,
+        meal_swipes_remaining: 10
+      })
+      .eq('id', profile.id);
+
+    if (error) {
+      setMealPlanMsg('Error enabling meal plan.');
+      console.error('Error enabling meal plan:', error);
+      return;
+    }
+
+    await refreshProfile();
+    setMealPlanMsg('Meal plan enabled with 10 swipes!');
+  }
+
+  async function handleAddSwipes() {
+    if (!profile) return;
+    setMealPlanMsg('');
+
+    const newSwipes = (profile.meal_swipes_remaining || 0) + 10;
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        has_meal_plan: true,
+        meal_swipes_remaining: newSwipes
+      })
+      .eq('id', profile.id);
+
+    if (error) {
+      setMealPlanMsg('Error adding swipes.');
+      console.error('Error adding swipes:', error);
+      return;
+    }
+
+    await refreshProfile();
+    setMealPlanMsg('Added 10 meal swipes!');
+  }
+
+  async function handleAddFlex() {
+    if (!profile) return;
+    setMealPlanMsg('');
+
+    const newFlex = (profile.flex_balance_cents || 0) + 5000; // $50.00
+    const { error } = await supabase
+      .from('profiles')
+      .update({ flex_balance_cents: newFlex })
+      .eq('id', profile.id);
+
+    if (error) {
+      setMealPlanMsg('Error adding flex dollars.');
+      console.error('Error adding flex:', error);
+      return;
+    }
+
+    await refreshProfile();
+    setMealPlanMsg('Added $50.00 Flex Dollars!');
+  }
+
+  async function handleResetBalances() {
+    if (!profile) return;
+    setMealPlanMsg('');
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        has_meal_plan: false,
+        meal_swipes_remaining: 0,
+        flex_balance_cents: 0
+      })
+      .eq('id', profile.id);
+
+    if (error) {
+      setMealPlanMsg('Error resetting balances.');
+      console.error('Error resetting:', error);
+      return;
+    }
+
+    await refreshProfile();
+    setMealPlanMsg('Balances reset to zero.');
   }
 
   return (
@@ -175,6 +266,53 @@ export default function Account({ username }: Props) {
               <button className="btn btn-primary" onClick={validateAndSaveLocation}>Save Delivery Location</button>
               {saveMsg && <div className="alert alert-info mt-2">{saveMsg}</div>}
             </div>
+          </div>
+        </div>
+
+        <div className="settings-section">
+          <h3 className="subsection-title">Meal Plan</h3>
+          <div className="settings-card">
+            <div className="meal-plan-status">
+              <div className="meal-plan-row">
+                <span className="meal-plan-label">Plan Status</span>
+                <span className="meal-plan-value">
+                  {profile?.has_meal_plan ? 'Active' : 'No Plan'}
+                </span>
+              </div>
+              <div className="meal-plan-row">
+                <span className="meal-plan-label">Meal Swipes Remaining</span>
+                <span className="meal-plan-value meal-plan-highlight">
+                  {profile?.meal_swipes_remaining ?? 0} swipes
+                </span>
+              </div>
+              <div className="meal-plan-row">
+                <span className="meal-plan-label">Flex Dollar Balance</span>
+                <span className="meal-plan-value meal-plan-highlight">
+                  ${((profile?.flex_balance_cents ?? 0) / 100).toFixed(2)}
+                </span>
+              </div>
+            </div>
+            <div className="meal-plan-info">
+              <p>Meal swipes can be used at participating dining locations. Each swipe is worth $8.42 or covers your entire order at Chick-fil-A.</p>
+            </div>
+            <div className="form-group test-buttons">
+              <span className="test-label">Test Controls:</span>
+              {!profile?.has_meal_plan && (
+                <button className="btn btn-outline-primary btn-sm" onClick={handleEnableMealPlan}>
+                  Enable Meal Plan
+                </button>
+              )}
+              <button className="btn btn-outline-secondary btn-sm" onClick={handleAddSwipes}>
+                +10 Swipes
+              </button>
+              <button className="btn btn-outline-secondary btn-sm" onClick={handleAddFlex}>
+                +$50 Flex
+              </button>
+              <button className="btn btn-outline-danger btn-sm" onClick={handleResetBalances}>
+                Reset All
+              </button>
+            </div>
+            {mealPlanMsg && <div className="alert alert-success mt-2">{mealPlanMsg}</div>}
           </div>
         </div>
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import Header from '../components/Header';
 import CheckoutModal from '../components/CheckoutModal';
 import OrderQRCode from '../components/OrderQRCode';
@@ -8,6 +9,7 @@ import { useCart } from '../contexts/CartContext';
 import { useOrders } from '../contexts/OrderContext';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
+import { getRestaurantLogo } from '../utils/restaurantLogos';
 import './RestaurantBrowse.css';
 
 interface Restaurant {
@@ -179,7 +181,7 @@ export default function RestaurantBrowse() {
     setShowCheckout(true);
   };
 
-  const handleConfirmOrder = async (paymentMethod: string, tip: number) => {
+  const handleConfirmOrder = async (_paymentMethod: string, tip: number) => {
     if (!selectedCartId) return;
 
     const selectedCart = carts[selectedCartId];
@@ -198,9 +200,9 @@ export default function RestaurantBrowse() {
     setShowCheckout(false);
 
     if (order) {
-      alert(`Order confirmed!\n\nOrder Code: ${order.verificationCode}\nPIN: ${order.pin}\n\nPayment: ${paymentMethod}\nTip: $${tip.toFixed(2)}\nTotal: $${totalWithTipAndFees.toFixed(2)}\n\nYour food will be delivered soon!`);
+      toast.success(`Order placed! Your PIN is ${order.pin}. Check your orders for details.`, { duration: 5000 });
     } else {
-      alert(`Order confirmed!\n\nPayment: ${paymentMethod}\nTip: $${tip.toFixed(2)}\nTotal: $${totalWithTipAndFees.toFixed(2)}\n\nYour food will be delivered soon!`);
+      toast.success('Order placed! Check your orders for details.', { duration: 5000 });
     }
 
     clearCart(selectedCartId);
@@ -350,10 +352,14 @@ export default function RestaurantBrowse() {
               return (
                 <div key={restaurant.id} className={`restaurant-card ${!isOpen ? 'closed' : ''}`}>
                   <div className="restaurant-image-wrapper">
-                    <div className="restaurant-image restaurant-placeholder">
-                      <span className="restaurant-initial">{restaurant.name.charAt(0)}</span>
+                    <div className="restaurant-image">
+                      <img
+                        src={getRestaurantLogo(restaurant.name)}
+                        alt={restaurant.name}
+                        className="restaurant-logo-img"
+                      />
                     </div>
-                    {!isOpen && <div className="closed-overlay">Currently Closed</div>}
+                    {!isOpen && <div className="closed-overlay">Closed - Order for Later</div>}
                   </div>
                   <div className="card-content">
                     <div className="restaurant-name">{restaurant.name}</div>
@@ -367,7 +373,7 @@ export default function RestaurantBrowse() {
                       className="order-btn"
                       onClick={() => navigate(`/restaurant/${restaurant.slug}`)}
                     >
-                      {isOpen ? 'Order Now' : 'View Menu'}
+                      {isOpen ? 'Order Now' : 'Order for Later'}
                     </button>
                   </div>
                 </div>

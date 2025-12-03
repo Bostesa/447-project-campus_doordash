@@ -88,9 +88,17 @@ function AppRoutes() {
         }
       />
 
-      {/* Account - works for both modes */}
+      {/* Account - separate routes for each mode to maintain navigation context */}
       <Route
         path="/account"
+        element={
+          <ProtectedRoute>
+            <Account username={profile?.name || ''} />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/worker-account"
         element={
           <ProtectedRoute>
             <Account username={profile?.name || ''} />

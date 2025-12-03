@@ -1,8 +1,38 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabaseClient';
+import { getRestaurantLogo } from '../utils/restaurantLogos';
 import './LandingPage.css';
+
+interface Restaurant {
+  id: number;
+  name: string;
+  slug: string;
+}
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+
+  useEffect(() => {
+    async function fetchRestaurants() {
+      const { data, error } = await supabase
+        .from('restaurants')
+        .select('id, name, slug')
+        .order('name');
+
+      if (error) {
+        console.error('Error fetching restaurants:', error);
+        return;
+      }
+
+      if (data) {
+        setRestaurants(data);
+      }
+    }
+
+    fetchRestaurants();
+  }, []);
 
   return (
     <div className="landing-page">
@@ -158,18 +188,27 @@ export default function LandingPage() {
       <div className="locations-section">
         <h2 className="locations-title">Available Locations</h2>
         <div className="locations-grid">
-          <div className="location-tag">Chick-fil-A</div>
-          <div className="location-tag">Starbucks</div>
-          <div className="location-tag">The Commons</div>
-          <div className="location-tag">True Grits</div>
-          <div className="location-tag">Einstein Bros Bagels</div>
-          <div className="location-tag">Dining Hall</div>
-          <div className="location-tag">Dunkin'</div>
-          <div className="location-tag">Panda Express</div>
-          <div className="location-tag">Qdoba</div>
-          <div className="location-tag">Subway</div>
-          <div className="location-tag">Chopt</div>
-          <div className="location-tag">Retriever Market</div>
+          {restaurants.length > 0 ? (
+            restaurants.map((restaurant) => (
+              <div key={restaurant.id} className="location-card">
+                <img
+                  src={getRestaurantLogo(restaurant.name)}
+                  alt={restaurant.name}
+                  className="location-logo"
+                />
+                <span className="location-name">{restaurant.name}</span>
+              </div>
+            ))
+          ) : (
+            <>
+              <div className="location-tag">Chick-fil-A</div>
+              <div className="location-tag">Starbucks</div>
+              <div className="location-tag">Einstein Bros Bagels</div>
+              <div className="location-tag">Dunkin</div>
+              <div className="location-tag">True Grits</div>
+              <div className="location-tag">The Commons</div>
+            </>
+          )}
         </div>
       </div>
 

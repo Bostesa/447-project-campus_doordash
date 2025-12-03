@@ -186,6 +186,65 @@
   color: #9ca3af;
 }
 
+/* Delivery Location Form */
+.delivery-location-form {
+  margin-bottom: 1rem;
+}
+
+.delivery-location-form .form-group {
+  margin-bottom: 1rem;
+}
+
+.delivery-location-form .form-group:last-child {
+  margin-bottom: 0;
+}
+
+.delivery-location-form .form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.delivery-location-form .form-select,
+.delivery-location-form .form-input {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.delivery-location-form .form-select:focus,
+.delivery-location-form .form-input:focus {
+  outline: none;
+  border-color: #f2b90d;
+  box-shadow: 0 0 0 3px rgba(242, 185, 13, 0.15);
+}
+
+.loading-buildings {
+  padding: 0.75rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.delivery-warning {
+  background-color: #fef3cd;
+  color: #856404;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
 /* Tip Options */
 .tip-options {
   display: grid;
@@ -324,6 +383,154 @@
 
 .price-row.total span {
   color: #000000;
+}
+
+.price-row.discount {
+  background-color: #ecfdf5;
+  margin: 0 -1rem;
+  padding: 0.5rem 1rem;
+}
+
+.price-row.discount span:first-child {
+  color: #059669;
+}
+
+.price-row.discount span:last-child {
+  color: #059669;
+  font-weight: 600;
+}
+
+.price-row.due {
+  background-color: #fef3c7;
+  margin: 0 -1rem;
+  padding: 0.5rem 1rem;
+  border-bottom: none;
+}
+
+.price-row.due span:first-child {
+  color: #d97706;
+}
+
+.price-row.due span:last-child {
+  color: #d97706;
+  font-weight: 700;
+}
+
+.confirm-order-btn:disabled {
+  background-color: #d1d5db;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Schedule Options */
+.schedule-notice {
+  background-color: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  color: #92400e;
+}
+
+.schedule-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.schedule-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background-color: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.schedule-option:hover:not(.disabled) {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.schedule-option.selected {
+  background-color: #fef3c7;
+  border-color: #f2b90d;
+}
+
+.schedule-option.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.schedule-option input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #f2b90d;
+}
+
+.schedule-option .option-content {
+  flex: 1;
+}
+
+.schedule-option .option-title {
+  display: block;
+  font-weight: 600;
+  color: #111827;
+  font-size: 0.9rem;
+}
+
+.schedule-option .option-detail {
+  display: block;
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-top: 0.125rem;
+}
+
+.schedule-picker {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+}
+
+.schedule-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.schedule-row:last-child {
+  margin-bottom: 0;
+}
+
+.schedule-label {
+  width: 60px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.schedule-select {
+  flex: 1;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  font-size: 0.9rem;
+  background-color: #ffffff;
+  color: #111827;
+  cursor: pointer;
+}
+
+.schedule-select:focus {
+  outline: none;
+  border-color: #f2b90d;
+  box-shadow: 0 0 0 2px rgba(242, 185, 13, 0.2);
 }
 
 /* Footer */

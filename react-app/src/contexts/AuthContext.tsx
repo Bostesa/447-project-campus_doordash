@@ -11,6 +11,9 @@ interface Profile {
   role: UserRole;
   avatar_url: string | null;
   created_at: string;
+  has_meal_plan: boolean;
+  meal_swipes_remaining: number;
+  flex_balance_cents: number;
 }
 
 interface AuthContextType {
@@ -21,6 +24,7 @@ interface AuthContextType {
   loading: boolean;
   signInWithGoogle: (redirectPath?: string) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -77,6 +81,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             role: 'customer' as UserRole, // Default role
             avatar_url: authUser.user_metadata?.avatar_url || null,
             created_at: new Date().toISOString(),
+            has_meal_plan: true, // Default to having meal plan for UMBC students
+            meal_swipes_remaining: 14, // Default weekly swipes
+            flex_balance_cents: 5000, // Default $50.00 flex
           };
           console.log('[fetchOrCreateProfile] New profile data:', newProfile);
 
@@ -124,6 +131,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }, 8000);
 
+    // Track the current user ID to avoid unnecessary re-fetches on tab switch
+    let currentUserId: string | null = null;
+
     // Get initial session
     const initAuth = async () => {
       try {
@@ -143,6 +153,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (initialSession?.user) {
+          // Set currentUserId to prevent re-fetches on tab switch
+          currentUserId = initialSession.user.id;
+
           console.log('[AuthContext] Setting user from session');
           setSession(initialSession);
           setUser(initialSession.user);
@@ -176,43 +189,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     initAuth();
 
-    // Listen for auth state changes
+    // Listen for auth state changes - but IGNORE tab visibility events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         console.log('[AuthContext] onAuthStateChange fired!');
         console.log('[AuthContext] Event:', event);
-        console.log('[AuthContext] Session:', {
-          hasSession: !!newSession,
-          userId: newSession?.user?.id,
-          userEmail: newSession?.user?.email
-        });
 
         if (!isMounted) {
           console.log('[AuthContext] Component unmounted, aborting');
           return;
         }
 
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
+        // IMPORTANT: Skip processing for events that just happen on tab visibility change
+        // TOKEN_REFRESHED happens when tab becomes visible - ignore if user hasn't changed
+        const newUserId = newSession?.user?.id ?? null;
 
-        if (newSession?.user) {
-          console.log('[AuthContext] Fetching profile after auth change...');
-          const userProfile = await fetchOrCreateProfile(newSession.user);
-          console.log('[AuthContext] Profile after auth change:', userProfile);
+        if (event === 'TOKEN_REFRESHED' && newUserId === currentUserId) {
+          console.log('[AuthContext] Ignoring TOKEN_REFRESHED - same user, just tab switch');
+          return;
+        }
 
-          if (!isMounted) return;
+        // Also skip if we get INITIAL_SESSION after already being initialized
+        if (event === 'INITIAL_SESSION' && authInitialized && newUserId === currentUserId) {
+          console.log('[AuthContext] Ignoring INITIAL_SESSION - already initialized');
+          return;
+        }
 
-          setProfile(userProfile);
-          setRole(userProfile?.role ?? null);
-          console.log('[AuthContext] Updated state with profile, role:', userProfile?.role);
-        } else {
-          console.log('[AuthContext] No user in session, clearing profile');
-          setProfile(null);
-          setRole(null);
+        console.log('[AuthContext] Processing auth change:', {
+          event,
+          oldUserId: currentUserId,
+          newUserId,
+          hasSession: !!newSession
+        });
+
+        // Only process if user actually changed or signed out
+        if (newUserId !== currentUserId || event === 'SIGNED_OUT') {
+          currentUserId = newUserId;
+
+          setSession(newSession);
+          setUser(newSession?.user ?? null);
+
+          if (newSession?.user) {
+            console.log('[AuthContext] Fetching profile for NEW user...');
+            const userProfile = await fetchOrCreateProfile(newSession.user);
+
+            if (!isMounted) return;
+
+            setProfile(userProfile);
+            setRole(userProfile?.role ?? null);
+            console.log('[AuthContext] Profile set for user:', userProfile?.role);
+          } else {
+            console.log('[AuthContext] User signed out, clearing profile');
+            setProfile(null);
+            setRole(null);
+          }
         }
 
         authInitialized = true;
-        console.log('[AuthContext] Setting loading to false after auth change');
         setLoading(false);
         clearTimeout(safetyTimeout);
       }
@@ -245,19 +278,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Sign out
+  // Refresh profile data (useful after payment processing)
+  const refreshProfile = async () => {
+    if (!user) return;
+
+    try {
+      const { data: updatedProfile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('[refreshProfile] Error:', error);
+        return;
+      }
+
+      if (updatedProfile) {
+        setProfile(updatedProfile as Profile);
+        setRole(updatedProfile.role as UserRole);
+      }
+    } catch (err) {
+      console.error('[refreshProfile] Exception:', err);
+    }
+  };
+
+  // Sign out - complete cleanup with no auto-login
   const signOut = async () => {
+    console.log('[AuthContext] Starting sign out...');
+
     // Get user ID before clearing state
     const userId = user?.id;
 
-    const { error } = await supabase.auth.signOut();
+    // Clear React state FIRST to prevent any re-renders that might try to use stale data
+    setUser(null);
+    setSession(null);
+    setProfile(null);
+    setRole(null);
 
-    if (error) {
-      console.error('Error signing out:', error);
-      throw error;
-    }
-
-    // Clear all localStorage remnants
+    // Clear all localStorage items BEFORE calling Supabase signOut
+    // This ensures no session restoration can happen
     localStorage.removeItem('loginState');
     localStorage.removeItem('customerAccounts');
     localStorage.removeItem('deliveryLocation');
@@ -271,17 +331,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Also clear guest cart if exists
     localStorage.removeItem('dormdash_cart_guest');
 
-    // Clear any remaining auth-related storage
-    Object.keys(localStorage).forEach(key => {
-      if (key.startsWith('dormdash_') || key.startsWith('sb-')) {
-        localStorage.removeItem(key);
+    // Clear ALL Supabase and app-related storage to prevent any auto-login
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith('dormdash_') || key.startsWith('sb-'))) {
+        keysToRemove.push(key);
       }
+    }
+    keysToRemove.forEach(key => {
+      console.log('[AuthContext] Removing localStorage key:', key);
+      localStorage.removeItem(key);
     });
 
-    setUser(null);
-    setSession(null);
-    setProfile(null);
-    setRole(null);
+    // Now sign out from Supabase
+    try {
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      if (error) {
+        console.error('[AuthContext] Supabase signOut error:', error);
+        // Don't throw - we've already cleared local state
+      }
+    } catch (err) {
+      console.error('[AuthContext] Exception during signOut:', err);
+    }
+
+    console.log('[AuthContext] Sign out complete - user must re-authenticate');
   };
 
   const value = {
@@ -292,6 +366,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading,
     signInWithGoogle,
     signOut,
+    refreshProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

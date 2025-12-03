@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import Header from '../components/Header';
 import QRScanner from '../components/QRScanner';
+import DeliveryMap, { DEFAULT_COORDINATES } from '../components/DeliveryMap';
 import { useOrders } from '../contexts/OrderContext';
+import { getRestaurantLogo } from '../utils/restaurantLogos';
 import './WorkerDashboard.css';
 
 interface Props {
@@ -15,20 +18,24 @@ export default function WorkerDashboard(_props: Props) {
     confirmDelivery,
     getOrderByCode,
     availableJobs,
+    scheduledJobs,
     currentJob,
     fetchAvailableJobs,
+    fetchScheduledJobs,
     claimJob,
     updateJobStatus,
     loadingJobs
   } = useOrders();
 
-  // Fetch available jobs on mount and periodically
+  // Fetch available and scheduled jobs on mount and periodically
   useEffect(() => {
     fetchAvailableJobs();
+    fetchScheduledJobs();
 
     // Refresh every 30 seconds
     const interval = setInterval(() => {
       fetchAvailableJobs();
+      fetchScheduledJobs();
     }, 30000);
 
     return () => clearInterval(interval);
@@ -38,13 +45,11 @@ export default function WorkerDashboard(_props: Props) {
     console.log('QR Code scanned:', result);
 
     let verificationCode = result;
-    let orderId = '';
 
     try {
       const parsedData = JSON.parse(result);
       if (parsedData.type === 'campus-doordash-order' && parsedData.verificationCode) {
         verificationCode = parsedData.verificationCode;
-        orderId = parsedData.orderId;
       }
     } catch (e) {
       verificationCode = result;
@@ -54,9 +59,9 @@ export default function WorkerDashboard(_props: Props) {
     const confirmed = await confirmDelivery(verificationCode);
 
     if (confirmed) {
-      alert(`Delivery Confirmed!\n\nOrder ID: ${orderId || order?.id || 'N/A'}\nRestaurant: ${order?.restaurant || currentJob?.restaurant || 'Unknown'}\n\nOrder has been marked as delivered.`);
+      toast.success(`Delivery confirmed! Order from ${order?.restaurant || currentJob?.restaurant || 'Unknown'} delivered.`);
     } else {
-      alert('Invalid Code\n\nThis QR code is not valid or the order has already been delivered.');
+      toast.error('Invalid code. This QR code is not valid or already delivered.');
     }
 
     setShowScanner(false);
@@ -69,7 +74,7 @@ export default function WorkerDashboard(_props: Props) {
 
   const handleVerifyPin = async () => {
     if (pin.length !== 4) {
-      alert('Please enter a 4-digit PIN');
+      toast.error('Please enter a 4-digit PIN');
       return;
     }
 
@@ -77,10 +82,10 @@ export default function WorkerDashboard(_props: Props) {
     const confirmed = await confirmDelivery(pin);
 
     if (confirmed) {
-      alert(`Delivery Confirmed!\n\nRestaurant: ${order?.restaurant || currentJob?.restaurant || 'Unknown'}\n\nOrder has been marked as delivered.`);
+      toast.success(`Delivery confirmed! Order from ${order?.restaurant || currentJob?.restaurant || 'Unknown'} delivered.`);
       setPin('');
     } else {
-      alert('Invalid PIN\n\nThis PIN is not valid or the order has already been delivered.');
+      toast.error('Invalid PIN. This PIN is not valid or already delivered.');
       setPin('');
     }
   };
@@ -88,25 +93,25 @@ export default function WorkerDashboard(_props: Props) {
   const handleAcceptJob = async (jobId: number) => {
     const success = await claimJob(jobId);
     if (success) {
-      alert('Job accepted! Head to the restaurant to pick up the order.');
+      toast.success('Job accepted! Head to the restaurant to pick up the order.');
     } else {
-      alert('Could not accept this job. It may have been claimed by another worker.');
+      toast.error('Could not accept this job. It may have been claimed by another worker.');
       fetchAvailableJobs(); // Refresh the list
     }
   };
 
   const handleUpdateStatus = async (status: string) => {
     if (!currentJob) {
-      alert('No active delivery selected');
+      toast.error('No active delivery selected');
       return;
     }
 
     const success = await updateJobStatus(currentJob.id, status);
     if (success) {
       if (status === 'delivering') {
-        alert('Status updated: On the way to customer!');
+        toast.success('Picked up! On the way to customer.');
       } else if (status === 'delivered') {
-        alert('Delivery completed!');
+        toast.success('Delivery completed!');
       }
     }
   };
@@ -134,6 +139,29 @@ export default function WorkerDashboard(_props: Props) {
     return date.toLocaleDateString();
   };
 
+  const formatScheduledTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const isTomorrow = date.toDateString() === tomorrow.toDateString();
+
+    const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
+    if (isToday) return `Today at ${timeStr}`;
+    if (isTomorrow) return `Tomorrow at ${timeStr}`;
+    return `${date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at ${timeStr}`;
+  };
+
+  const getMinutesUntilText = (minutes: number) => {
+    if (minutes < 60) return `Ready in ${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (mins === 0) return `Ready in ${hours} hr`;
+    return `Ready in ${hours} hr ${mins} min`;
+  };
+
   return (
     <div className="worker-dashboard">
       <Header activeTab="jobs" />
@@ -147,7 +175,10 @@ export default function WorkerDashboard(_props: Props) {
               <div className="active-delivery-card">
                 <div className="order-from">Order from {currentJob.restaurant}</div>
                 <div className="order-title">{currentJob.itemCount} item{currentJob.itemCount !== 1 ? 's' : ''}</div>
-                <div className="order-details">{currentJob.dropOffLocation}</div>
+                <div className="order-details delivery-location">
+                  <strong>Deliver to:</strong> {currentJob.deliveryBuildingName || 'Unknown Building'}
+                  {currentJob.deliveryRoomNumber && <span className="room-number">, Room {currentJob.deliveryRoomNumber}</span>}
+                </div>
                 <div className="order-pay">{getEstimatedPay(currentJob.totalCents, currentJob.tipCents)} Est. Pay</div>
               </div>
 
@@ -181,6 +212,21 @@ export default function WorkerDashboard(_props: Props) {
                 </div>
               </div>
             </div>
+
+            {/* Delivery Map */}
+            <DeliveryMap
+              pickupLocation={{
+                name: currentJob.restaurant,
+                latitude: currentJob.pickupCoords?.latitude || DEFAULT_COORDINATES.COMMONS.latitude,
+                longitude: currentJob.pickupCoords?.longitude || DEFAULT_COORDINATES.COMMONS.longitude
+              }}
+              deliveryLocation={{
+                name: currentJob.deliveryBuildingName || 'Delivery Location',
+                latitude: currentJob.deliveryCoords?.latitude || DEFAULT_COORDINATES.UMBC_CENTER[0],
+                longitude: currentJob.deliveryCoords?.longitude || DEFAULT_COORDINATES.UMBC_CENTER[1]
+              }}
+              roomNumber={currentJob.deliveryRoomNumber}
+            />
 
             <div className="button-row">
               <div className="status-buttons">
@@ -229,13 +275,17 @@ export default function WorkerDashboard(_props: Props) {
         ) : (
           availableJobs.map((job) => (
             <div key={job.id} className="job-card">
+              <div className="job-icon">
+                <img src={getRestaurantLogo(job.restaurant)} alt={job.restaurant} className="job-logo-img" />
+              </div>
               <div className="job-details">
                 <div className="job-from">Order from {job.restaurant}</div>
                 <div className="job-title">
                   {job.itemCount} item{job.itemCount !== 1 ? 's' : ''} - {formatPrice(job.totalCents)}
                 </div>
                 <div className="job-location">
-                  {job.restaurantLocation || 'Campus'} to {job.dropOffLocation}
+                  {job.restaurantLocation || 'Campus'} to {job.deliveryBuildingName || 'Unknown Building'}
+                  {job.deliveryRoomNumber && `, Rm ${job.deliveryRoomNumber}`}
                 </div>
                 <div className="job-time">{getTimeAgo(job.createdAt)}</div>
               </div>
@@ -249,6 +299,50 @@ export default function WorkerDashboard(_props: Props) {
               </button>
             </div>
           ))
+        )}
+
+        {/* Scheduled Orders Section */}
+        {scheduledJobs.length > 0 && (
+          <>
+            <h2 className="section-title" style={{ marginTop: '2rem' }}>
+              Scheduled Orders
+              <span className="scheduled-count">{scheduledJobs.length}</span>
+            </h2>
+            <p className="scheduled-info">
+              These orders are scheduled for later. You can accept them in advance.
+            </p>
+            {scheduledJobs.map((job) => (
+              <div key={job.id} className="job-card scheduled-job">
+                <div className="scheduled-badge">
+                  {formatScheduledTime(job.scheduledFor)}
+                </div>
+                <div className="job-icon">
+                  <img src={getRestaurantLogo(job.restaurant)} alt={job.restaurant} className="job-logo-img" />
+                </div>
+                <div className="job-details">
+                  <div className="job-from">Order from {job.restaurant}</div>
+                  <div className="job-title">
+                    {job.itemCount} item{job.itemCount !== 1 ? 's' : ''} - {formatPrice(job.totalCents)}
+                  </div>
+                  <div className="job-location">
+                    {job.restaurantLocation || 'Campus'} to {job.deliveryBuildingName || 'Unknown Building'}
+                    {job.deliveryRoomNumber && `, Rm ${job.deliveryRoomNumber}`}
+                  </div>
+                  <div className="job-time scheduled-countdown">
+                    {getMinutesUntilText(job.minutesUntilReady)}
+                  </div>
+                </div>
+                <div className="job-pay">{getEstimatedPay(job.totalCents, job.tipCents)}</div>
+                <button
+                  className="accept-btn"
+                  onClick={() => handleAcceptJob(job.id)}
+                  disabled={!!currentJob}
+                >
+                  {currentJob ? 'Busy' : 'Accept'}
+                </button>
+              </div>
+            ))}
+          </>
         )}
       </div>
 

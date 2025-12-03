@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useCart } from '../contexts/CartContext';
 import { useOrders } from '../contexts/OrderContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -45,7 +46,7 @@ export default function CustomerOrders(_props: Props) {
     setShowCheckout(true);
   };
 
-  const handleConfirmOrder = async (paymentMethod: string, tip: number) => {
+  const handleConfirmOrder = async (_paymentMethod: string, tip: number) => {
     if (!selectedCartId) return;
 
     const cart = carts[selectedCartId];
@@ -58,9 +59,9 @@ export default function CustomerOrders(_props: Props) {
     setShowCheckout(false);
 
     if (order) {
-      alert(`Order confirmed!\n\nOrder Code: ${order.verificationCode}\nPIN: ${order.pin}\n\nPayment: ${paymentMethod}\nTip: $${tip.toFixed(2)}\nTotal: $${totalWithTipAndFees.toFixed(2)}\n\nYour food will be delivered soon!`);
+      toast.success(`Order placed! Your PIN is ${order.pin}. Check below for details.`, { duration: 5000 });
     } else {
-      alert(`Order confirmed!\n\nPayment: ${paymentMethod}\nTip: $${tip.toFixed(2)}\nTotal: $${totalWithTipAndFees.toFixed(2)}\n\nYour food will be delivered soon!`);
+      toast.success('Order placed! Check below for details.', { duration: 5000 });
     }
 
     clearCart(selectedCartId);

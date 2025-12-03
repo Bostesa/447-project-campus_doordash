@@ -1,0 +1,123 @@
+.delivery-map-container {
+  background-color: #ffffff;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.map-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.map-toggle-btn {
+  background-color: #e2e8f0;
+  border: none;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.map-toggle-btn:hover {
+  background-color: #cbd5e1;
+  color: #1e293b;
+}
+
+.map-legend {
+  padding: 0.75rem 1rem;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.legend-marker {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-marker.pickup {
+  background-color: #3b82f6;
+}
+
+.legend-marker.delivery {
+  background-color: #22c55e;
+}
+
+.map-wrapper {
+  height: 250px;
+  transition: height 0.3s ease;
+}
+
+.delivery-map-container.expanded .map-wrapper {
+  height: 400px;
+}
+
+.leaflet-map {
+  height: 100%;
+  width: 100%;
+  z-index: 1;
+}
+
+/* Leaflet popup styling */
+.leaflet-popup-content-wrapper {
+  border-radius: 0.5rem;
+}
+
+.leaflet-popup-content {
+  font-size: 0.875rem;
+  margin: 0.75rem 1rem;
+}
+
+.leaflet-popup-content strong {
+  color: #1e293b;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .map-wrapper {
+    height: 200px;
+  }
+
+  .delivery-map-container.expanded .map-wrapper {
+    height: 350px;
+  }
+
+  .map-legend {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .legend-item {
+    font-size: 0.8rem;
+  }
+}

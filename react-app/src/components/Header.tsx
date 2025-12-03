@@ -12,12 +12,16 @@ interface Props {
 
 export default function Header({ username, activeTab, showLogo = true, onLogout }: Props) {
   const navigate = useNavigate();
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, user } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
 
   // Determine if user is in worker mode based on current route
   const isWorker = window.location.pathname.startsWith('/worker');
-  const displayName = username || profile?.name || 'User';
+
+  // Get display name - prioritize profile name, then username prop, then parse from email
+  const displayName = profile?.name || username || user?.user_metadata?.full_name ||
+    (user?.email ? user.email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'User');
+
   const logoText = 'DormDash';
 
   const handleSignOut = async () => {
@@ -70,7 +74,7 @@ export default function Header({ username, activeTab, showLogo = true, onLogout 
               </button>
               <button
                 className={`nav-link ${activeTab === 'account' ? 'active' : ''}`}
-                onClick={() => navigate('/account')}
+                onClick={() => navigate('/worker-account')}
               >
                 Account
               </button>
@@ -115,29 +119,49 @@ export default function Header({ username, activeTab, showLogo = true, onLogout 
           <>
             <div className="dropdown-overlay" onClick={() => setShowDropdown(false)} />
             <div className="user-dropdown">
-              <div className="dropdown-header">
-                <div className="dropdown-user-info">
-                  <span className="dropdown-name">{displayName}</span>
-                  <span className="dropdown-email">{profile?.email || ''}</span>
-                </div>
-              </div>
-              <div className="dropdown-divider" />
-              <button className="dropdown-item" onClick={() => { navigate('/account'); setShowDropdown(false); }}>
-                Account Settings
+              <button className="dropdown-item" onClick={() => { navigate(isWorker ? '/worker-account' : '/account'); setShowDropdown(false); }}>
+                <svg className="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                <span>Account</span>
+                <svg className="dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
               </button>
-              <div className="dropdown-divider" />
               {isWorker ? (
-                <button className="dropdown-item mode-switch" onClick={() => { navigate('/browse'); setShowDropdown(false); }}>
-                  Switch to Customer
+                <button className="dropdown-item" onClick={() => { navigate('/browse'); setShowDropdown(false); }}>
+                  <svg className="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                  </svg>
+                  <span>Switch to Customer</span>
+                  <svg className="dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="m9 18 6-6-6-6" />
+                  </svg>
                 </button>
               ) : (
-                <button className="dropdown-item mode-switch" onClick={() => { navigate('/worker-dashboard'); setShowDropdown(false); }}>
-                  Switch to Dasher
+                <button className="dropdown-item" onClick={() => { navigate('/worker-dashboard'); setShowDropdown(false); }}>
+                  <svg className="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="1" y="3" width="15" height="13" rx="2" />
+                    <path d="M16 8h4l3 3v5a2 2 0 0 1-2 2h-1" />
+                    <circle cx="5.5" cy="18.5" r="2.5" />
+                    <circle cx="18.5" cy="18.5" r="2.5" />
+                  </svg>
+                  <span>Switch to Dasher</span>
+                  <svg className="dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="m9 18 6-6-6-6" />
+                  </svg>
                 </button>
               )}
               <div className="dropdown-divider" />
               <button className="dropdown-item sign-out" onClick={handleSignOut}>
-                Sign Out
+                <svg className="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                <span>Sign Out</span>
               </button>
             </div>
           </>

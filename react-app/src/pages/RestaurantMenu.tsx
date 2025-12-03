@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import Header from '../components/Header';
-import CheckoutModal from '../components/CheckoutModal';
+import CheckoutModal, { OrderPaymentInfo, ScheduleInfo } from '../components/CheckoutModal';
 import { useCart } from '../contexts/CartContext';
 import { useOrders } from '../contexts/OrderContext';
 import { supabase } from '../lib/supabaseClient';
+import { getRestaurantLogo } from '../utils/restaurantLogos';
 import './RestaurantMenu.css';
 
 interface MenuItemFromDB {
@@ -62,6 +64,8 @@ export default function RestaurantMenu() {
   const [restaurantLocation, setRestaurantLocation] = useState('');
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<string[]>([]);
+  const [isOpen, setIsOpen] = useState(true);
+  const [operatingHours, setOperatingHours] = useState<Record<string, { open: string; close: string } | null> | undefined>(undefined);
 
   // Refs for scrolling to categories
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -89,6 +93,41 @@ export default function RestaurantMenu() {
       if (data && data.length > 0) {
         setRestaurantName(data[0].restaurant_name);
         setRestaurantLocation(data[0].location);
+
+        // Fetch operating hours from restaurant
+        const { data: restaurantData } = await supabase
+          .from('restaurants')
+          .select('open_time, close_time')
+          .eq('slug', restaurantId)
+          .single();
+
+        if (restaurantData) {
+          const openTime = restaurantData.open_time;
+          const closeTime = restaurantData.close_time;
+
+          if (openTime && closeTime) {
+            // Create operating hours map for all days
+            const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            const hoursMap: Record<string, { open: string; close: string } | null> = {};
+            days.forEach(day => {
+              hoursMap[day] = { open: openTime, close: closeTime };
+            });
+            setOperatingHours(hoursMap);
+
+            // Check if currently open
+            const now = new Date();
+            const currentHour = now.getHours();
+            const currentMinute = now.getMinutes();
+            const currentTime = currentHour * 60 + currentMinute;
+
+            const [openHour, openMin] = openTime.split(':').map(Number);
+            const [closeHour, closeMin] = closeTime.split(':').map(Number);
+            const openMinutes = openHour * 60 + openMin;
+            const closeMinutes = closeHour * 60 + closeMin;
+
+            setIsOpen(currentTime >= openMinutes && currentTime < closeMinutes);
+          }
+        }
 
         // Get unique categories in order
         const uniqueCategories = [...new Set(data.map((item: MenuItemFromDB) => item.category_name))];
@@ -148,20 +187,44 @@ export default function RestaurantMenu() {
     setShowCheckout(true);
   };
 
-  const handleConfirmOrder = async (paymentMethod: string, tip: number, deliveryInfo?: string) => {
+  const handleConfirmOrder = async (
+    _paymentMethod: string,
+    tip: number,
+    deliveryInfo?: string,
+    paymentInfo?: OrderPaymentInfo,
+    scheduleInfo?: ScheduleInfo
+  ) => {
     if (!restaurantId) return;
 
     const totalWithTipAndFees = cartTotal + 2.99 + 1.50 + tip;
 
+    // Convert OrderPaymentInfo to the format expected by addOrder
+    const paymentInfoForOrder = paymentInfo ? {
+      paymentMethod: paymentInfo.paymentMethod,
+      mealSwipeUsed: paymentInfo.mealSwipeUsed,
+      flexAmountCents: paymentInfo.flexAmountCents,
+      cardAmountCents: paymentInfo.cardAmountCents,
+      stripePaymentId: paymentInfo.stripePaymentId
+    } : undefined;
+
     // Save the order to Supabase
-    const order = await addOrder(restaurantId, restaurantName, cart, totalWithTipAndFees, tip, deliveryInfo);
+    const order = await addOrder(
+      restaurantId,
+      restaurantName,
+      cart,
+      totalWithTipAndFees,
+      tip,
+      deliveryInfo,
+      paymentInfoForOrder,
+      scheduleInfo
+    );
 
     setShowCheckout(false);
 
     if (order) {
-      alert(`Order confirmed!\n\nOrder Code: ${order.verificationCode}\nPIN: ${order.pin}\n\nPayment: ${paymentMethod}\nTip: $${tip.toFixed(2)}\nTotal: $${totalWithTipAndFees.toFixed(2)}\n\nYour food will be delivered soon!`);
+      toast.success(`Order placed! Your PIN is ${order.pin}. Check your orders for details.`, { duration: 5000 });
     } else {
-      alert(`Order confirmed!\n\nPayment: ${paymentMethod}\nTip: $${tip.toFixed(2)}\nTotal: $${totalWithTipAndFees.toFixed(2)}\n\nYour food will be delivered soon!`);
+      toast.success('Order placed! Check your orders for details.', { duration: 5000 });
     }
 
     clearCart(restaurantId);
@@ -208,8 +271,15 @@ export default function RestaurantMenu() {
             ← Back
           </button>
           <div className="header-info">
-            <h1 className="restaurant-title">{restaurantName}</h1>
-            {restaurantLocation && <span className="restaurant-location">{restaurantLocation}</span>}
+            <img
+              src={getRestaurantLogo(restaurantName)}
+              alt={restaurantName}
+              className="menu-restaurant-logo"
+            />
+            <div className="header-text">
+              <h1 className="restaurant-title">{restaurantName}</h1>
+              {restaurantLocation && <span className="restaurant-location">{restaurantLocation}</span>}
+            </div>
           </div>
           <button className="cart-btn" onClick={() => setShowCart(!showCart)}>
             Cart {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
@@ -384,6 +454,8 @@ export default function RestaurantMenu() {
           subtotal={cartTotal}
           onClose={() => setShowCheckout(false)}
           onConfirmOrder={handleConfirmOrder}
+          isOpen={isOpen}
+          operatingHours={operatingHours}
         />
       )}
     </div>

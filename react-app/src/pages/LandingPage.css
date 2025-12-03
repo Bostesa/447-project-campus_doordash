@@ -413,6 +413,41 @@
   transform: scale(1.05);
 }
 
+.location-card {
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 194, 14, 0.3);
+  border-radius: 1rem;
+  padding: 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 140px;
+  transition: all 0.3s;
+}
+
+.location-card:hover {
+  background: rgba(255, 194, 14, 0.15);
+  border-color: #FFC20E;
+  transform: translateY(-5px);
+}
+
+.location-logo {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.5rem;
+}
+
+.location-name {
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
 /* Footer Section */
 .landing-footer {
   margin-top: 6rem;
