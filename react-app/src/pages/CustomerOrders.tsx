@@ -21,7 +21,6 @@ const restaurantIdMap: Record<string, string> = {
   'Chick fil A': 'chick-fil-a',
   'Starbucks': 'starbucks',
   'Einstein Bros': 'einstein-bros-bagels',
-  'Dining Hall': 'dining-hall',
   'Dunkin Donuts': 'dunkin-donuts'
 };
 
@@ -214,7 +213,7 @@ export default function CustomerOrders(_props: Props) {
 
   return (
     <div className="orders-page customer">
-      <Header username={user?.email || 'Guest'} onLogout={signOut} activeTab='orders'/>
+      <Header username={user?.email || 'Guest'} activeTab='orders'/>
 
       {totalCartCount > 0 && (
         <button className="floating-cart-btn" onClick={() => setShowCartSidebar(true)}>

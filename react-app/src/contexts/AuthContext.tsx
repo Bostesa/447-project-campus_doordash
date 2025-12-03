@@ -2,13 +2,10 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
 
-export type UserRole = 'customer' | 'worker' | null;
-
 interface Profile {
   id: string;
   name: string;
   email: string | null;
-  role: UserRole;
   avatar_url: string | null;
   created_at: string;
   has_meal_plan: boolean;
@@ -20,7 +17,6 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
-  role: UserRole;
   loading: boolean;
   signInWithGoogle: (redirectPath?: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -33,7 +29,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [role, setRole] = useState<UserRole>(null);
   const [loading, setLoading] = useState(true);
 
   // Fetch or create profile for user with timeout
@@ -78,7 +73,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             id: authUser.id,
             email: authUser.email,
             name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
-            role: 'customer' as UserRole, // Default role
             avatar_url: authUser.user_metadata?.avatar_url || null,
             created_at: new Date().toISOString(),
             has_meal_plan: true, // Default to having meal plan for UMBC students
@@ -167,8 +161,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (!isMounted) return;
 
           setProfile(userProfile);
-          setRole(userProfile?.role ?? null);
-          console.log('[AuthContext] Profile and role set:', { role: userProfile?.role });
         } else {
           console.log('[AuthContext] No session found');
         }
@@ -320,7 +312,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // This ensures no session restoration can happen
     localStorage.removeItem('loginState');
     localStorage.removeItem('customerAccounts');
-    localStorage.removeItem('deliveryLocation');
 
     // Clear user-specific data
     if (userId) {
@@ -362,7 +353,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     session,
     profile,
-    role,
     loading,
     signInWithGoogle,
     signOut,
