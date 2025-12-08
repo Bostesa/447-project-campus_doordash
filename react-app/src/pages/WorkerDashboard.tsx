@@ -22,23 +22,20 @@ export default function WorkerDashboard(_props: Props) {
     currentJob,
     fetchAvailableJobs,
     fetchScheduledJobs,
+    fetchActiveDelivery,
     claimJob,
     updateJobStatus,
     loadingJobs
   } = useOrders();
 
-  // Fetch available and scheduled jobs on mount and periodically
+  // Fetch worker's active delivery and available jobs on mount
   useEffect(() => {
+    console.log('[WorkerDashboard] Component mounted, fetching data...');
+    fetchActiveDelivery();
     fetchAvailableJobs();
     fetchScheduledJobs();
-
-    // Refresh every 30 seconds
-    const interval = setInterval(() => {
-      fetchAvailableJobs();
-      fetchScheduledJobs();
-    }, 30000);
-
-    return () => clearInterval(interval);
+    // Note: OrderContext handles 10-second polling for new orders, so we don't need
+    // additional polling here. This prevents redundant API calls and potential freezing.
   }, []);
 
   const handleQRScan = async (result: string) => {
@@ -162,6 +159,40 @@ export default function WorkerDashboard(_props: Props) {
     return `Ready in ${hours} hr ${mins} min`;
   };
 
+  // Check if current job is a scheduled order that's still in the future
+  const isScheduledFuture = () => {
+    if (!currentJob?.scheduledFor) return false;
+    const scheduledTime = new Date(currentJob.scheduledFor);
+    const now = new Date();
+    // Consider "ready" if within 15 minutes of scheduled time
+    const fifteenMinutes = 15 * 60 * 1000;
+    return scheduledTime.getTime() - now.getTime() > fifteenMinutes;
+  };
+
+  const getScheduledCountdown = () => {
+    if (!currentJob?.scheduledFor) return '';
+    const scheduledTime = new Date(currentJob.scheduledFor);
+    const now = new Date();
+    const diffMs = scheduledTime.getTime() - now.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if (diffMins < 60) return `${diffMins} min`;
+    const hours = Math.floor(diffMins / 60);
+    const mins = diffMins % 60;
+    if (mins === 0) return `${hours} hr`;
+    return `${hours} hr ${mins} min`;
+  };
+
+  // Debug log for scheduled order
+  if (currentJob) {
+    console.log('[WorkerDashboard] Current job:', {
+      id: currentJob.id,
+      restaurant: currentJob.restaurant,
+      scheduledFor: currentJob.scheduledFor,
+      isScheduledFuture: isScheduledFuture()
+    });
+  }
+
   return (
     <div className="worker-dashboard">
       <Header activeTab="jobs" />
@@ -171,8 +202,24 @@ export default function WorkerDashboard(_props: Props) {
         {currentJob ? (
           <>
             <h2 className="section-title">Active Delivery</h2>
-            <div className="active-delivery-grid">
-              <div className="active-delivery-card">
+
+            {/* Scheduled Order Banner */}
+            {isScheduledFuture() && (
+              <div className="scheduled-order-banner">
+                <div className="scheduled-badge-large">SCHEDULED ORDER</div>
+                <div className="scheduled-info-text">
+                  <span className="scheduled-time-label">Pickup scheduled for:</span>
+                  <span className="scheduled-time-value">{formatScheduledTime(currentJob.scheduledFor!)}</span>
+                </div>
+                <div className="scheduled-countdown-box">
+                  <span className="countdown-label">Ready for pickup in:</span>
+                  <span className="countdown-value">{getScheduledCountdown()}</span>
+                </div>
+              </div>
+            )}
+
+            <div className={`active-delivery-grid ${isScheduledFuture() ? 'scheduled-active' : ''}`}>
+              <div className={`active-delivery-card ${isScheduledFuture() ? 'scheduled-card' : ''}`}>
                 <div className="order-from">Order from {currentJob.restaurant}</div>
                 <div className="order-title">{currentJob.itemCount} item{currentJob.itemCount !== 1 ? 's' : ''}</div>
                 <div className="order-details delivery-location">
@@ -182,34 +229,40 @@ export default function WorkerDashboard(_props: Props) {
                 <div className="order-pay">{getEstimatedPay(currentJob.totalCents, currentJob.tipCents)} Est. Pay</div>
               </div>
 
-              <div className="confirm-delivery-card">
-                <div className="confirm-title">Confirm Delivery</div>
+              <div className={`confirm-delivery-card ${isScheduledFuture() ? 'scheduled-card' : ''}`}>
+                <div className="confirm-title">
+                  {isScheduledFuture() ? 'Waiting for Pickup Time' : 'Confirm Delivery'}
+                </div>
                 <div className="confirm-description">
-                  Enter PIN or scan QR code to complete the order.
+                  {isScheduledFuture()
+                    ? 'This order is scheduled for later. You can pick it up when the scheduled time arrives.'
+                    : 'Enter PIN or scan QR code to complete the order.'}
                 </div>
-                <div className="pin-input-group">
-                  <label>Customer PIN</label>
-                  <input
-                    type="text"
-                    value={pin}
-                    onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    placeholder="– – – –"
-                    maxLength={4}
-                    className="pin-input"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter' && pin.length === 4) {
-                        handleVerifyPin();
-                      }
-                    }}
-                  />
-                  <button
-                    className="verify-pin-btn"
-                    onClick={handleVerifyPin}
-                    disabled={pin.length !== 4}
-                  >
-                    Verify PIN
-                  </button>
-                </div>
+                {!isScheduledFuture() && (
+                  <div className="pin-input-group">
+                    <label>Customer PIN</label>
+                    <input
+                      type="text"
+                      value={pin}
+                      onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                      placeholder="– – – –"
+                      maxLength={4}
+                      className="pin-input"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && pin.length === 4) {
+                          handleVerifyPin();
+                        }
+                      }}
+                    />
+                    <button
+                      className="verify-pin-btn"
+                      onClick={handleVerifyPin}
+                      disabled={pin.length !== 4}
+                    >
+                      Verify PIN
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -230,18 +283,26 @@ export default function WorkerDashboard(_props: Props) {
 
             <div className="button-row">
               <div className="status-buttons">
-                <button
-                  className="btn btn-primary"
-                  onClick={() => handleUpdateStatus('delivering')}
-                >
-                  Picked Up
-                </button>
-                <button
-                  className="btn btn-secondary"
-                  onClick={handleOpenScanner}
-                >
-                  Scan QR
-                </button>
+                {isScheduledFuture() ? (
+                  <button className="btn btn-disabled" disabled>
+                    Waiting for scheduled time...
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => handleUpdateStatus('delivering')}
+                    >
+                      Picked Up
+                    </button>
+                    <button
+                      className="btn btn-secondary"
+                      onClick={handleOpenScanner}
+                    >
+                      Scan QR
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </>

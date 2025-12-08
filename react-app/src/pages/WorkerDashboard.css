@@ -388,6 +388,85 @@
   font-weight: 600;
 }
 
+/* Scheduled Active Delivery Banner */
+.scheduled-order-banner {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border: 2px solid #3b82f6;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.scheduled-badge-large {
+  display: inline-block;
+  background-color: #3b82f6;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 700;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  letter-spacing: 0.05em;
+}
+
+.scheduled-info-text {
+  margin-bottom: 0.75rem;
+}
+
+.scheduled-time-label {
+  color: #6b7280;
+  font-size: 0.9rem;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.scheduled-time-value {
+  color: #000000;
+  font-size: 1.25rem;
+  font-weight: 700;
+  display: block;
+}
+
+.scheduled-countdown-box {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  display: inline-block;
+}
+
+.countdown-label {
+  color: #6b7280;
+  font-size: 0.875rem;
+  display: block;
+}
+
+.countdown-value {
+  color: #3b82f6;
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: block;
+}
+
+/* Scheduled Active Delivery Card Styling */
+.scheduled-active .active-delivery-card,
+.scheduled-active .confirm-delivery-card,
+.scheduled-card {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border: 1px solid #93c5fd;
+}
+
+.btn-disabled {
+  background-color: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+  width: 100%;
+}
+
+.btn-disabled:hover {
+  background-color: #e5e7eb;
+}
+
 @media (max-width: 768px) {
   .active-delivery-grid,
   .button-row {
@@ -407,5 +486,17 @@
     position: static;
     display: inline-block;
     margin-bottom: 0.5rem;
+  }
+
+  .scheduled-order-banner {
+    padding: 1rem;
+  }
+
+  .scheduled-time-value {
+    font-size: 1.1rem;
+  }
+
+  .countdown-value {
+    font-size: 1.25rem;
   }
 }

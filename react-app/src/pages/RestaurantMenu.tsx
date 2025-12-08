@@ -142,6 +142,39 @@ export default function RestaurantMenu() {
 
   // Refs for scrolling to categories
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const isScrollingRef = useRef(false);
+
+  // Intersection Observer for scroll-spy
+  useEffect(() => {
+    const observerOptions = {
+      root: null,
+      rootMargin: '-100px 0px -60% 0px',
+      threshold: 0
+    };
+
+    const observerCallback = (entries: IntersectionObserverEntry[]) => {
+      // Don't update active category if user clicked a sidebar link (manual scroll)
+      if (isScrollingRef.current) return;
+
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const category = entry.target.getAttribute('data-category');
+          if (category) {
+            setActiveCategory(category);
+          }
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+    // Observe all category sections
+    Object.values(categoryRefs.current).forEach(ref => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => observer.disconnect();
+  }, [categories, menuItems]);
 
   // Fetch menu items from Supabase
   useEffect(() => {
@@ -321,9 +354,14 @@ export default function RestaurantMenu() {
   // Scroll to category when clicking sidebar
   const scrollToCategory = (category: string) => {
     setActiveCategory(category);
+    isScrollingRef.current = true;
     const ref = categoryRefs.current[category];
     if (ref) {
       ref.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Reset after scroll animation completes
+      setTimeout(() => {
+        isScrollingRef.current = false;
+      }, 800);
     }
   };
 
@@ -401,6 +439,7 @@ export default function RestaurantMenu() {
                 <div
                   key={category}
                   className="menu-category"
+                  data-category={category}
                   ref={(el) => { categoryRefs.current[category] = el; }}
                 >
                   <h2 className="category-title">{category}</h2>

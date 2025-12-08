@@ -42,6 +42,8 @@ interface AvailableJob {
   deliveryCoords?: { latitude: number; longitude: number };
   deliveryBuildingName?: string;
   deliveryRoomNumber?: string;
+  // For scheduled orders
+  scheduledFor?: string;
 }
 
 interface PaymentInfo {
@@ -81,6 +83,7 @@ interface OrderContextType {
   getOrderByCode: (code: string) => Order | undefined;
   fetchAvailableJobs: () => Promise<void>;
   fetchScheduledJobs: () => Promise<void>;
+  fetchActiveDelivery: () => Promise<void>;
   claimJob: (jobId: number) => Promise<boolean>;
   updateJobStatus: (jobId: number, status: string) => Promise<boolean>;
   loadingJobs: boolean;
@@ -650,7 +653,9 @@ export function OrderProvider({ children }: { children: ReactNode }) {
           delivery_instructions,
           items_json,
           venue_id,
-          customer_id
+          customer_id,
+          is_scheduled,
+          scheduled_for
         `)
         .eq('status', 'pending')
         .is('worker_id', null)
@@ -769,7 +774,8 @@ export function OrderProvider({ children }: { children: ReactNode }) {
             pickupCoords,
             deliveryCoords,
             deliveryBuildingName,
-            deliveryRoomNumber
+            deliveryRoomNumber,
+            scheduledFor: order.scheduled_for || undefined
           };
         })
       );
@@ -945,6 +951,159 @@ export function OrderProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Fetch worker's active delivery (for restoring on page refresh)
+  const fetchActiveDelivery = async () => {
+    if (!user?.id) {
+      console.log('[OrderContext] Cannot fetch active delivery: No user');
+      return;
+    }
+
+    try {
+      console.log('[OrderContext] Fetching active delivery for worker:', user.id);
+
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          id,
+          total_cents,
+          tip_cents,
+          created_at,
+          delivery_instructions,
+          items_json,
+          venue_id,
+          customer_id,
+          status,
+          is_scheduled,
+          scheduled_for
+        `)
+        .eq('worker_id', user.id)
+        .in('status', ['claimed', 'preparing', 'delivering'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error('[OrderContext] Error fetching active delivery:', error);
+        return;
+      }
+
+      if (!data) {
+        console.log('[OrderContext] No active delivery found for worker');
+        setCurrentJob(null);
+        return;
+      }
+
+      console.log('[OrderContext] Found active delivery:', data);
+
+      // Get restaurant info including coordinates
+      let restaurantName = 'Unknown Restaurant';
+      let restaurantLocation = '';
+      let pickupCoords: { latitude: number; longitude: number } | undefined;
+
+      if (data.venue_id) {
+        const { data: restaurant } = await supabase
+          .from('restaurants')
+          .select('name, location, latitude, longitude')
+          .eq('id', data.venue_id)
+          .single();
+        if (restaurant) {
+          restaurantName = restaurant.name;
+          restaurantLocation = restaurant.location;
+          if (restaurant.latitude && restaurant.longitude) {
+            pickupCoords = {
+              latitude: restaurant.latitude,
+              longitude: restaurant.longitude
+            };
+          }
+        }
+      }
+
+      // Get customer info
+      let customerName = 'Customer';
+      if (data.customer_id) {
+        const { data: customer } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('id', data.customer_id)
+          .single();
+        if (customer) {
+          customerName = customer.name;
+        }
+      }
+
+      // Parse delivery instructions for building info
+      let deliveryCoords: { latitude: number; longitude: number } | undefined;
+      let deliveryBuildingName: string | undefined;
+      let deliveryRoomNumber: string | undefined;
+
+      if (data.delivery_instructions) {
+        try {
+          const deliveryInfo = JSON.parse(data.delivery_instructions);
+
+          if (deliveryInfo.buildingName) {
+            deliveryBuildingName = deliveryInfo.buildingName;
+          }
+
+          if (deliveryInfo.buildingId) {
+            const { data: building } = await supabase
+              .from('buildings')
+              .select('name, latitude, longitude')
+              .eq('id', deliveryInfo.buildingId)
+              .single();
+            if (building) {
+              if (!deliveryBuildingName) {
+                deliveryBuildingName = building.name;
+              }
+              if (building.latitude && building.longitude) {
+                deliveryCoords = {
+                  latitude: building.latitude,
+                  longitude: building.longitude
+                };
+              }
+            }
+          }
+
+          if (deliveryInfo.roomNumber) {
+            deliveryRoomNumber = deliveryInfo.roomNumber;
+          }
+        } catch (e) {
+          deliveryBuildingName = data.delivery_instructions;
+        }
+      }
+
+      // Parse items to get count
+      let itemCount = 1;
+      try {
+        const items = JSON.parse(data.items_json || '[]');
+        itemCount = items.reduce((sum: number, item: any) => sum + (item.quantity || 1), 0);
+      } catch (e) {
+        // ignore
+      }
+
+      const activeJob: AvailableJob = {
+        id: data.id,
+        restaurant: restaurantName,
+        restaurantLocation,
+        customerName,
+        itemCount,
+        totalCents: data.total_cents,
+        tipCents: data.tip_cents || 0,
+        createdAt: data.created_at,
+        dropOffLocation: data.delivery_instructions || 'See delivery instructions',
+        pickupCoords,
+        deliveryCoords,
+        deliveryBuildingName,
+        deliveryRoomNumber,
+        scheduledFor: data.scheduled_for || undefined
+      };
+
+      console.log('[OrderContext] Restored active delivery:', activeJob);
+      setCurrentJob(activeJob);
+    } catch (err) {
+      console.error('[OrderContext] Unexpected error fetching active delivery:', err);
+    }
+  };
+
   // Worker claims a job
   const claimJob = async (jobId: number): Promise<boolean> => {
     if (!user?.id) {
@@ -971,14 +1130,16 @@ export function OrderProvider({ children }: { children: ReactNode }) {
 
       console.log('[OrderContext] Job claimed successfully');
 
-      // Find and set current job
-      const claimedJob = availableJobs.find(j => j.id === jobId);
+      // Find and set current job (check both available and scheduled jobs)
+      const claimedJob = availableJobs.find(j => j.id === jobId) ||
+                         scheduledJobs.find(j => j.id === jobId);
       if (claimedJob) {
         setCurrentJob(claimedJob);
       }
 
-      // Remove from available jobs
+      // Remove from available jobs and scheduled jobs
       setAvailableJobs(prev => prev.filter(j => j.id !== jobId));
+      setScheduledJobs(prev => prev.filter(j => j.id !== jobId));
 
       return true;
     } catch (err) {
@@ -1080,6 +1241,7 @@ export function OrderProvider({ children }: { children: ReactNode }) {
       getOrderByCode,
       fetchAvailableJobs,
       fetchScheduledJobs,
+      fetchActiveDelivery,
       claimJob,
       updateJobStatus,
       loadingJobs

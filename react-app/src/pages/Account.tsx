@@ -7,6 +7,7 @@ import { useCart } from '../contexts/CartContext';
 import { useOrders } from '../contexts/OrderContext';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
+import { syncTrueGritsMenu, getTrueGritsMenuStatus } from '../lib/syncTrueGritsMenu';
 import './Account.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -28,6 +29,8 @@ export default function Account({ username }: Props) {
   const [instructions, setInstructions] = useState<string>('');
   const [saveMsg, setSaveMsg] = useState<string>('');
   const [mealPlanMsg, setMealPlanMsg] = useState<string>('');
+  const [syncMsg, setSyncMsg] = useState<string>('');
+  const [syncing, setSyncing] = useState(false);
 
   const handlePlaceOrder = (restaurantId: string) => {
     setSelectedCartId(restaurantId);
@@ -194,6 +197,32 @@ export default function Account({ username }: Props) {
     setMealPlanMsg('Balances reset to zero.');
   }
 
+  async function handleSyncTrueGrits() {
+    setSyncing(true);
+    setSyncMsg('');
+
+    try {
+      // First check current status
+      const status = await getTrueGritsMenuStatus();
+      console.log('[Account] Current True Grits status:', status);
+
+      // Sync the menu
+      const result = await syncTrueGritsMenu();
+      console.log('[Account] Sync result:', result);
+
+      if (result.success) {
+        setSyncMsg(`✓ ${result.message}`);
+      } else {
+        setSyncMsg(`✗ ${result.message}`);
+      }
+    } catch (error) {
+      console.error('[Account] Sync error:', error);
+      setSyncMsg('Error syncing menu. Check console for details.');
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   return (
     <div className="account-page">
       <Header username={username || profile?.name || 'User'} activeTab="account" />
@@ -313,6 +342,30 @@ export default function Account({ username }: Props) {
               </button>
             </div>
             {mealPlanMsg && <div className="alert alert-success mt-2">{mealPlanMsg}</div>}
+          </div>
+        </div>
+
+        <div className="settings-section">
+          <h3 className="subsection-title">Admin Tools</h3>
+          <div className="settings-card">
+            <div className="admin-section">
+              <h4 style={{ marginBottom: '0.5rem', fontWeight: 600 }}>True Grits Menu Sync</h4>
+              <p style={{ color: '#6b7280', fontSize: '0.875rem', marginBottom: '1rem' }}>
+                Sync True Grits dining hall menu from UMBC's SGA API. Falls back to static menu if API is unavailable.
+              </p>
+              <button
+                className="btn btn-outline-primary"
+                onClick={handleSyncTrueGrits}
+                disabled={syncing}
+              >
+                {syncing ? 'Syncing...' : 'Sync True Grits Menu'}
+              </button>
+              {syncMsg && (
+                <div className={`alert mt-2 ${syncMsg.startsWith('✓') ? 'alert-success' : 'alert-warning'}`}>
+                  {syncMsg}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
