@@ -200,38 +200,54 @@ export default function RestaurantMenu() {
         setRestaurantName(data[0].restaurant_name);
         setRestaurantLocation(data[0].location);
 
-        // Fetch operating hours from restaurant
-        const { data: restaurantData } = await supabase
-          .from('restaurants')
-          .select('open_time, close_time')
-          .eq('slug', restaurantId)
-          .single();
+        // Fetch operating hours from operating_hours table
+        const restaurantDbId = data[0].restaurant_id;
+        const { data: hoursData, error: hoursError } = await supabase
+          .from('operating_hours')
+          .select('day_of_week, opens_at, closes_at, is_closed')
+          .eq('restaurant_id', restaurantDbId);
 
-        if (restaurantData) {
-          const openTime = restaurantData.open_time;
-          const closeTime = restaurantData.close_time;
+        if (!hoursError && hoursData && hoursData.length > 0) {
+          // Build hours map from operating_hours table
+          const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+          const hoursMap: Record<string, { open: string; close: string } | null> = {};
 
-          if (openTime && closeTime) {
-            // Create operating hours map for all days
-            const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-            const hoursMap: Record<string, { open: string; close: string } | null> = {};
-            days.forEach(day => {
-              hoursMap[day] = { open: openTime, close: closeTime };
-            });
-            setOperatingHours(hoursMap);
+          hoursData.forEach((row: { day_of_week: number; opens_at: string; closes_at: string; is_closed: boolean }) => {
+            const dayName = days[row.day_of_week];
+            if (row.is_closed) {
+              hoursMap[dayName] = null;
+            } else {
+              hoursMap[dayName] = { open: row.opens_at, close: row.closes_at };
+            }
+          });
 
-            // Check if currently open
-            const now = new Date();
+          // Fill in any missing days as null (closed)
+          days.forEach(day => {
+            if (!(day in hoursMap)) {
+              hoursMap[day] = null;
+            }
+          });
+
+          setOperatingHours(hoursMap);
+
+          // Check if currently open
+          const now = new Date();
+          const todayIndex = now.getDay();
+          const todayHours = hoursData.find((h: { day_of_week: number }) => h.day_of_week === todayIndex);
+
+          if (todayHours && !todayHours.is_closed && todayHours.opens_at && todayHours.closes_at) {
             const currentHour = now.getHours();
             const currentMinute = now.getMinutes();
             const currentTime = currentHour * 60 + currentMinute;
 
-            const [openHour, openMin] = openTime.split(':').map(Number);
-            const [closeHour, closeMin] = closeTime.split(':').map(Number);
+            const [openHour, openMin] = todayHours.opens_at.split(':').map(Number);
+            const [closeHour, closeMin] = todayHours.closes_at.split(':').map(Number);
             const openMinutes = openHour * 60 + openMin;
             const closeMinutes = closeHour * 60 + closeMin;
 
             setIsOpen(currentTime >= openMinutes && currentTime < closeMinutes);
+          } else {
+            setIsOpen(false);
           }
         }
 

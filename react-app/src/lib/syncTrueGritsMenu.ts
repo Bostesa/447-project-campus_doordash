@@ -278,8 +278,6 @@ async function getOrCreateTrueGritsRestaurant(): Promise<number | null> {
       name: 'True Grits',
       slug: 'true-grits',
       location: 'The Commons',
-      open_time: '07:00:00',
-      close_time: '23:00:00',
       latitude: 39.2537,
       longitude: -76.7143
     })
@@ -289,6 +287,28 @@ async function getOrCreateTrueGritsRestaurant(): Promise<number | null> {
   if (error) {
     console.error('[syncTrueGritsMenu] Error creating restaurant:', error);
     return null;
+  }
+
+  // Insert operating hours for the new restaurant (all 7 days, 7am-11pm)
+  if (created?.id) {
+    const operatingHours = [];
+    for (let day = 0; day < 7; day++) {
+      operatingHours.push({
+        restaurant_id: created.id,
+        day_of_week: day,
+        opens_at: '07:00:00',
+        closes_at: '23:00:00',
+        is_closed: false
+      });
+    }
+
+    const { error: hoursError } = await supabase
+      .from('operating_hours')
+      .insert(operatingHours);
+
+    if (hoursError) {
+      console.error('[syncTrueGritsMenu] Error creating operating hours:', hoursError);
+    }
   }
 
   return created?.id || null;
