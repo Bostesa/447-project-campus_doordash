@@ -4,7 +4,7 @@ import { Elements, CardElement } from '@stripe/react-stripe-js';
 import './PaymentSelector.css';
 
 // Constants
-const MEAL_SWIPE_VALUE_CENTS = 842; // $8.42
+const MEAL_SWIPE_VALUE_CENTS = 857; // $8.57
 
 // Meal periods for swipe validation
 function getCurrentMealPeriod(): string | null {
@@ -113,7 +113,7 @@ export default function PaymentSelector({
   const canUseMealSwipe = hasMealPlan && mealSwipesRemaining > 0 && mealPeriod !== null;
 
   // For swipe deal restaurants, swipe covers entire order
-  // Otherwise, swipe = $8.42 credit
+  // Otherwise, swipe = $8.57 credit
   const swipeCreditCents = isSwipeDeal ? totalCents : MEAL_SWIPE_VALUE_CENTS;
   const remainderAfterSwipeCents = Math.max(0, totalCents - swipeCreditCents);
   const remainderAfterSwipeDollars = remainderAfterSwipeCents / 100;

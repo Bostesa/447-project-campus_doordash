@@ -322,7 +322,7 @@ export default function Account({ username }: Props) {
               </div>
             </div>
             <div className="meal-plan-info">
-              <p>Meal swipes can be used at participating dining locations. Each swipe is worth $8.42 or covers your entire order at Chick-fil-A.</p>
+              <p>Meal swipes can be used at participating dining locations. Each swipe is worth $8.57 or covers your entire order at Chick-fil-A. Orders over $8.57 require the remainder to be paid with Flex or card.</p>
             </div>
             <div className="form-group test-buttons">
               <span className="test-label">Test Controls:</span>

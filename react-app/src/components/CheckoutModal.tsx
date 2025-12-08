@@ -629,7 +629,7 @@ export default function CheckoutModal({ restaurantName, restaurantSlug, items, s
               {paymentInfo && paymentInfo.mealSwipeUsed && (
                 <div className="price-row discount">
                   <span>Meal Swipe Credit</span>
-                  <span>-${(isSwipeDeal ? total : 8.42).toFixed(2)}</span>
+                  <span>-${(isSwipeDeal ? total : 8.57).toFixed(2)}</span>
                 </div>
               )}
               {paymentInfo && paymentInfo.flexAmountCents > 0 && (
