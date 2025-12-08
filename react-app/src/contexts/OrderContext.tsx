@@ -130,25 +130,14 @@ export function OrderProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Load orders from localStorage AND Supabase on mount (for customer's own orders view)
+  // Load orders from Supabase on mount (for customer's own orders view)
+  // NOTE: We intentionally do NOT use localStorage for orders - always fetch fresh from database
   useEffect(() => {
     async function loadOrders() {
       if (!user?.id) return;
 
-      // First, load from localStorage for immediate display
-      const storageKey = `dormdash_orders_${user.id}`;
-      const savedOrders = localStorage.getItem(storageKey);
-      let localOrders: Order[] = [];
-      if (savedOrders) {
-        try {
-          localOrders = JSON.parse(savedOrders);
-          setOrders(localOrders);
-        } catch (error) {
-          console.error('Error loading orders from localStorage:', error);
-        }
-      }
+      console.log('[OrderContext] Loading orders from Supabase for user:', user.id);
 
-      // Then fetch from Supabase to get any orders that might not be in localStorage
       try {
         const { data: supabaseOrders, error } = await supabase
           .from('orders')
@@ -169,87 +158,74 @@ export function OrderProvider({ children }: { children: ReactNode }) {
 
         if (error) {
           console.error('[OrderContext] Error fetching customer orders:', error);
+          setOrders([]);
           return;
         }
 
-        if (supabaseOrders && supabaseOrders.length > 0) {
-          // Convert Supabase orders to local format
-          const ordersFromDb: Order[] = await Promise.all(
-            supabaseOrders.map(async (dbOrder: any) => {
-              // Get restaurant name
-              let restaurantName = 'Unknown Restaurant';
-              let restaurantSlug = '';
-              if (dbOrder.venue_id) {
-                const { data: restaurant } = await supabase
-                  .from('restaurants')
-                  .select('name, slug')
-                  .eq('id', dbOrder.venue_id)
-                  .single();
-                if (restaurant) {
-                  restaurantName = restaurant.name;
-                  restaurantSlug = restaurant.slug;
-                }
-              }
-
-              // Parse items
-              let items: OrderItem[] = [];
-              try {
-                items = JSON.parse(dbOrder.items_json || '[]');
-              } catch (e) {
-                // ignore
-              }
-
-              // Format date
-              const date = new Date(dbOrder.created_at);
-              const now = new Date();
-              const isToday = date.toDateString() === now.toDateString();
-              const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-              const dateStr = isToday ? `Today, ${timeStr}` : `${date.toLocaleDateString()}, ${timeStr}`;
-
-              return {
-                id: `order-${dbOrder.id}`,
-                supabaseId: dbOrder.id,
-                date: dateStr,
-                restaurant: restaurantName,
-                restaurantId: restaurantSlug,
-                items,
-                total: dbOrder.total_cents / 100,
-                status: dbOrder.status as Order['status'],
-                verificationCode: dbOrder.verification_code || '',
-                pin: dbOrder.pin || ''
-              };
-            })
-          );
-
-          // Merge with local orders (Supabase takes precedence for status updates)
-          const mergedOrders = ordersFromDb.map(dbOrder => {
-            const localOrder = localOrders.find(lo => lo.supabaseId === dbOrder.supabaseId);
-            return localOrder ? { ...localOrder, status: dbOrder.status } : dbOrder;
-          });
-
-          // Add any local orders that aren't in Supabase yet
-          const localOnlyOrders = localOrders.filter(lo =>
-            !lo.supabaseId || !ordersFromDb.some(db => db.supabaseId === lo.supabaseId)
-          );
-
-          setOrders([...mergedOrders, ...localOnlyOrders]);
-          console.log('[OrderContext] Merged orders from Supabase and localStorage:', mergedOrders.length + localOnlyOrders.length);
+        if (!supabaseOrders || supabaseOrders.length === 0) {
+          console.log('[OrderContext] No orders found in database');
+          setOrders([]);
+          return;
         }
+
+        // Convert Supabase orders to local format
+        const ordersFromDb: Order[] = await Promise.all(
+          supabaseOrders.map(async (dbOrder: any) => {
+            // Get restaurant name
+            let restaurantName = 'Unknown Restaurant';
+            let restaurantSlug = '';
+            if (dbOrder.venue_id) {
+              const { data: restaurant } = await supabase
+                .from('restaurants')
+                .select('name, slug')
+                .eq('id', dbOrder.venue_id)
+                .single();
+              if (restaurant) {
+                restaurantName = restaurant.name;
+                restaurantSlug = restaurant.slug;
+              }
+            }
+
+            // Parse items
+            let items: OrderItem[] = [];
+            try {
+              items = JSON.parse(dbOrder.items_json || '[]');
+            } catch (e) {
+              // ignore
+            }
+
+            // Format date
+            const date = new Date(dbOrder.created_at);
+            const now = new Date();
+            const isToday = date.toDateString() === now.toDateString();
+            const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            const dateStr = isToday ? `Today, ${timeStr}` : `${date.toLocaleDateString()}, ${timeStr}`;
+
+            return {
+              id: `order-${dbOrder.id}`,
+              supabaseId: dbOrder.id,
+              date: dateStr,
+              restaurant: restaurantName,
+              restaurantId: restaurantSlug,
+              items,
+              total: dbOrder.total_cents / 100,
+              status: dbOrder.status as Order['status'],
+              verificationCode: dbOrder.verification_code || '',
+              pin: dbOrder.pin || ''
+            };
+          })
+        );
+
+        setOrders(ordersFromDb);
+        console.log('[OrderContext] Loaded orders from Supabase:', ordersFromDb.length);
       } catch (err) {
         console.error('[OrderContext] Error loading orders from Supabase:', err);
+        setOrders([]);
       }
     }
 
     loadOrders();
   }, [user?.id]);
-
-  // Save orders to localStorage
-  useEffect(() => {
-    if (user?.id && orders.length > 0) {
-      const storageKey = `dormdash_orders_${user.id}`;
-      localStorage.setItem(storageKey, JSON.stringify(orders));
-    }
-  }, [orders, user?.id]);
 
   // Real-time subscription for customer order updates
   useEffect(() => {
